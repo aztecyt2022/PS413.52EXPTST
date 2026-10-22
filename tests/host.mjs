@@ -44,7 +44,7 @@ console.log('PASS: remembered auto-load preference, manual launch, session resto
 for(const ua of ['Desktop browser',ps4('13.50'),ps4('14.00'),ps4('13.52.1'),ps4('13.520'),'Mozilla/5.0 (PlayStation 5 13.52)']){
   const unsupported=environment(ua);unsupported.login();assert.equal(unsupported.node('loadExploit').disabled,true);assert.equal(unsupported.node('toggleAuto').disabled,true);await unsupported.advance(60000);assert.equal(unsupported.requests.length,0);unsupported.loadEntry();assert.equal(unsupported.modules.length,0);
 }
-const overlay=environment(ps4('13.52'),{overlay:true});overlay.login();assert.equal(overlay.intervals.size,0);assert.equal(overlay.node('toggleAuto').disabled,true);await overlay.advance(60000);assert.equal(overlay.requests.length,0);overlay.node('loadExploit').click();await overlay.settle();assert.deepEqual(overlay.navigation,['loader/jb.html?overlay=1']);assert.equal(overlay.requests[0],'loader/prohen.bin?v=2.2.8-build4');
+const overlay=environment(ps4('13.52'),{overlay:true});overlay.login();assert.equal(overlay.intervals.size,0);assert.equal(overlay.node('toggleAuto').disabled,true);await overlay.advance(60000);assert.equal(overlay.requests.length,0);overlay.node('loadExploit').click();await overlay.settle();assert.deepEqual(overlay.navigation,['loader/jb.html?overlay=1']);assert.equal(overlay.requests[0],'loader/prohen.bin?v=2.2.8-build5');
 for(const option of [{},{overlay:true},{original:true}]){const corrupt=environment(ps4('13.52'),{...option,corrupt:true});corrupt.login();corrupt.node('loadExploit').click();await corrupt.settle();assert.equal(corrupt.navigation.length,0);assert.match(corrupt.node('status').textContent,/verification failed/);assert.equal(corrupt.intervals.size,0);}
 const original=environment(ps4('13.52'),{original:true});original.login();
 assert.equal(original.node('hostTitle').textContent,'PS4 HEN 2.2.0');
@@ -52,7 +52,7 @@ assert.equal(original.node('overlayNote').hidden,true);
 original.node('loadExploit').click();await original.settle();
 assert.deepEqual(original.navigation,['loader/jb.html?original=1']);
 assert.equal(original.requests[0],'loader/hen.bin');
-assert.equal(gated.requests[0],'loader/prohen.bin?v=2.2.8-build4');
+assert.equal(gated.requests[0],'loader/prohen.bin?v=2.2.8-build5');
 assert.equal(gated.node('hostTitle').textContent,'PROHEN 2.2.8');
 assert.equal(gated.node('overlayNote').hidden,false);
 for(const env of [gated,overlay,original]){
@@ -70,7 +70,7 @@ console.log('PASS: direct loader requires the browser gate and matching firmware
 
 const hashes={
  'loader/hen.bin':['568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e',499776],
- 'loader/prohen.bin':['f04082626ee6bae2484e72d9a392f24ab5bcfe007e3793a464ff4ab058b54f4f',587904],
+ 'loader/prohen.bin':['1ef6c0da6d951d278eca92414d4abe56a635912b288828040233ee619e9ba16a',587904],
  'loader/patches/1352.bin':['adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e',632]
 };
 for(const [path,[hash,size]] of Object.entries(hashes)){const data=bytes(path);assert.equal(data.length,size);assert.equal(createHash('sha256').update(data).digest('hex'),hash);assert.equal(allowedLoader.context.HEN_SHA256(data),hash);}
