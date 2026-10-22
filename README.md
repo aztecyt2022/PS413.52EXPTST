@@ -4,9 +4,8 @@ Select a payload using the links on the host page:
 
 | Payload | Selection |
 | --- | --- |
-| PROHEN 2.2.8 | Default |
+| HENACY v1 | Default |
 | Original PS4 HEN 2.2.0 | `?original=1` |
-| HENACY v1 | `?henacy=1` |
 
 HENACY v1 uses the **HNCY** PS4 settings-menu label. Its payload is stored at
 `loader/henacy.bin` (500,448 bytes), with SHA-256:

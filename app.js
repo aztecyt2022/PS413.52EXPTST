@@ -1,7 +1,6 @@
 window.startHENHost=function () {
   "use strict";
   var build=window.HEN_BUILD;
-  var overlayTest=build.manualOnly;
   var loadButton=document.getElementById("loadExploit");
   var autoButton=document.getElementById("toggleAuto");
   var firmwareText=document.getElementById("firmware");
@@ -42,7 +41,7 @@ window.startHENHost=function () {
       statusText.textContent="Loading exploit…";
       window.location.assign("loader/jb.html"+build.query);
     }).catch(function(error){
-      busy=false;loadButton.disabled=!supported;autoButton.disabled=!supported||overlayTest;
+      busy=false;loadButton.disabled=!supported;autoButton.disabled=!supported;
       statusText.textContent=error.message+" Auto loading is stopped.";
     });
   }
@@ -53,7 +52,7 @@ window.startHENHost=function () {
     if(remaining===0)launch();
   }
   function startAuto(){
-    if(!supported||busy||overlayTest)return;
+    if(!supported||busy)return;
     stopTimer();autoEnabled=true;deadline=Date.now()+10000;
     autoButton.textContent="Disable auto loading";
     tick();timer=setInterval(tick,250);
@@ -70,8 +69,7 @@ window.startHENHost=function () {
     statusText.textContent="Disabled. Only a PS4 running firmware 13.52 is supported.";
     return;
   }
-  loadButton.disabled=false;autoButton.disabled=overlayTest;
-  if(overlayTest){autoButton.textContent="Auto loading disabled";statusText.textContent="PROHEN manual mode. Select Load exploit to start. Auto loading is disabled.";return;}
+  loadButton.disabled=false;autoButton.disabled=false;
   var disabled=false;try{disabled=localStorage.getItem(preferenceKey)==="1";}catch(_){}
   if(disabled){autoButton.textContent="Enable auto loading";statusText.textContent="Auto loading disabled. Use Load exploit when ready.";}
   else startAuto();

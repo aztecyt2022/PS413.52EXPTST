@@ -1,5 +1,5 @@
 {
-  "name":"aztec-prohen-pages",
+  "name":"aztec-henacy-pages",
   "private":true,
   "type":"module",
   "scripts":{"build":"node scripts/build.mjs","test":"node tests/host.mjs"}
