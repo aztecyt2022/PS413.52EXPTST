@@ -5,17 +5,22 @@
   var host=document.getElementById("hostPanel");
   var password=document.getElementById("password");
   var error=document.getElementById("loginError");
+  document.title=window.HEN_BUILD.label;
+  document.getElementById("loginTitle").textContent=window.HEN_BUILD.label;
   function enterHost(){
     if(started||!window.HEN_AUTH.allowed())return;
     started=true;
     var build=window.HEN_BUILD;
     window.HEN_OVERLAY_TEST=build.manualOnly;
     document.getElementById("hostTitle").textContent=build.label+(build.manualOnly?" (manual)":"");
-    document.getElementById("overlayNote").hidden=build.original;
+    document.getElementById("overlayNote").hidden=build.original||build.henacy;
     document.getElementById("toggleAuto").hidden=window.HEN_OVERLAY_TEST;
     var link=document.getElementById("switchBuild");
     link.href=build.original?"./":"?original=1";
     link.textContent=build.original?"Use PROHEN":"Use original HEN";
+    var henacyLink=document.getElementById("switchHenacy");
+    henacyLink.href=build.henacy?"./":"?henacy=1";
+    henacyLink.textContent=build.henacy?"Use PROHEN":"Use HENACY v1";
     password.value="";error.textContent="";login.hidden=true;host.hidden=false;
     window.startHENHost();
   }

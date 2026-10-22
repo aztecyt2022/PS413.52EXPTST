@@ -55,7 +55,7 @@ function finishUI(ok) {
   const m = document.getElementById("msg");
   if (m)
     m.textContent = ok
-      ? window.HEN_BUILD.original ? "HEN payload started" : "PROHEN payload started"
+      ? window.HEN_BUILD.henacy ? "HENACY payload started" : window.HEN_BUILD.original ? "HEN payload started" : "PROHEN payload started"
       : armedEver
         ? "Restart your console"
         : "Refresh the page and run again";

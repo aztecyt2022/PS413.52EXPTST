@@ -11,7 +11,7 @@
 <body>
 <main>
   <section id="loginPanel">
-    <h1>PROHEN 2.2.8</h1>
+    <h1 id="loginTitle">PROHEN 2.2.8</h1>
     <p>Enter the password to enter the site.</p>
     <form id="loginForm">
       <label for="password">Password</label>
@@ -31,6 +31,7 @@
     </div>
     <p id="status" role="status">Checking firmware…</p>
     <p><a id="switchBuild" href="?original=1">Use original HEN</a></p>
+    <p><a id="switchHenacy" href="?henacy=1">Use HENACY v1</a></p>
     <p><a href="overlay-plugin-license.txt">Plugin licence</a></p>
     <div class="logout"><button id="logout" type="button">Log out</button></div>
   </section>
@@ -40,8 +41,8 @@
 <script src="sha256.js"></script>
 <script src="auth.js"></script>
 <script src="device.js"></script>
-<script src="payloads.js?v=2.2.8-build5"></script>
+<script src="payloads.js?v=henacy-v1"></script>
 <script src="app.js"></script>
-<script src="entry.js"></script>
+<script src="entry.js?v=henacy-v1"></script>
 </body>
 </html>

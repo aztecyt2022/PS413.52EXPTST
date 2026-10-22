@@ -11,6 +11,6 @@
     return;
   }
   var module=document.createElement("script");
-  module.type="module";module.src="jb.js?v=prohen228-build5-local";
+  module.type="module";module.src="jb.js?v=henacy-v1";
   document.head.appendChild(module);
 })();
