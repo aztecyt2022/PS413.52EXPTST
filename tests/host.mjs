@@ -58,9 +58,9 @@ assert.equal(henacy.node('switchBuild').href,'?original=1');
 assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
 await henacy.advance(10000);
 assert.deepEqual(henacy.navigation,['loader/jb.html']);
-assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-869664c304ad');
+assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-icon-7163545ede8f');
 assert.equal(gated.node('switchBuild').href,'?original=1');
-assert.equal(gated.requests[0],'loader/henacy.bin?v=1-869664c304ad');
+assert.equal(gated.requests[0],'loader/henacy.bin?v=1-icon-7163545ede8f');
 assert.equal(gated.node('hostTitle').textContent,'HENACY v1');
 assert.equal(gated.context.document.title,'HENACY v1');
 for(const env of [gated,original,henacy]){
@@ -81,11 +81,51 @@ await allowedLoader.advance(lifetime+1);assert.equal(allowedLoader.context.HEN_A
 console.log('PASS: direct loader requires the browser gate and matching firmware before it imports the exploit module; sessions expire.');
 
 const hashes={
- 'loader/henacy.bin':['869664c304ad44fd2ba81da2e3e5d9a24a17175698bfe4182ac35c6db4df86d6',500448],
+ 'loader/henacy.bin':['7163545ede8f6990539f73a22f1dc13f1ecd1f9019e7978c8d91a979c197e752',500448],
  'loader/hen.bin':['568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e',499776],
  'loader/patches/1352.bin':['adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e',632]
 };
 for(const [path,[hash,size]] of Object.entries(hashes)){const data=bytes(path);assert.equal(data.length,size);assert.equal(createHash('sha256').update(data).digest('hex'),hash);assert.equal(allowedLoader.context.HEN_SHA256(data),hash);}
+const menuIcon=Buffer.from(bytes('assets/hen_settings_icon.png'));
+const brandedPayload=Buffer.from(bytes('loader/henacy.bin'));
+const pngMagic=Buffer.from([137,80,78,71,13,10,26,10]);
+assert(menuIcon.subarray(0,8).equals(pngMagic));
+assert.equal(menuIcon.readUInt32BE(16),128);assert.equal(menuIcon.readUInt32BE(20),128);
+assert.equal(menuIcon[24],8);assert.equal(menuIcon[25],6);
+assert.equal(createHash('sha256').update(menuIcon).digest('hex'),'a81ec5f1131b6a4595674b2239429669e10bf3a3fb69ed77e389490c933378ac');
+const iconOffset=brandedPayload.indexOf(menuIcon);
+assert(iconOffset>=0,'The menu image must be embedded in the payload.');
+assert.equal(brandedPayload.indexOf(pngMagic),iconOffset);
+assert.equal(brandedPayload.indexOf(pngMagic,iconOffset+1),-1);
+const selfMagic=Buffer.from([79,21,61,29]),elfMagic=Buffer.from([127,69,76,70]);
+let iconWriters=0;
+for(let base=brandedPayload.indexOf(selfMagic);base>=0;base=brandedPayload.indexOf(selfMagic,base+4)){
+  if(base+32>brandedPayload.length)continue;
+  const count=brandedPayload.readUInt16LE(base+24),elf=base+32+count*32;
+  if(count>64||elf+64>brandedPayload.length||!brandedPayload.subarray(elf,elf+4).equals(elfMagic))continue;
+  const phoff=Number(brandedPayload.readBigUInt64LE(elf+32)),stride=brandedPayload.readUInt16LE(elf+54),segments=[];
+  for(let i=0;i<count;i++){
+    const entry=base+32+i*32,flags=brandedPayload.readBigUInt64LE(entry);
+    if(!(flags&0x800n))continue;
+    const ph=elf+phoff+Number((flags>>20n)&0xfffn)*stride,type=brandedPayload.readUInt32LE(ph);
+    if(type!==1&&type!==0x61000010)continue;
+    segments.push({file:base+Number(brandedPayload.readBigUInt64LE(entry+8)),size:Number(brandedPayload.readBigUInt64LE(entry+16)),virtual:Number(brandedPayload.readBigUInt64LE(ph+16)),flags:brandedPayload.readUInt32LE(ph+4)});
+  }
+  if(!segments.some(s=>s.file<=iconOffset&&iconOffset+menuIcon.length<=s.file+s.size))continue;
+  const map=(address,length=1)=>{const s=segments.find(s=>s.virtual<=address&&address+length<=s.virtual+s.size);return s?s.file+address-s.virtual:undefined;};
+  for(const executable of segments.filter(s=>s.flags&1))for(let at=executable.file+7;at+17<=executable.file+executable.size;at++){
+    if(!brandedPayload.subarray(at,at+3).equals(Buffer.from([72,141,53]))||brandedPayload[at+7]!==186||brandedPayload[at+12]!==232)continue;
+    if(!brandedPayload.subarray(at-7,at-4).equals(Buffer.from([72,141,61])))continue;
+    const pathAddress=executable.virtual+at-executable.file+brandedPayload.readInt32LE(at-4),pathOffset=map(pathAddress);
+    if(pathOffset===undefined)continue;
+    const pathEnd=brandedPayload.indexOf(0,pathOffset);
+    if(brandedPayload.subarray(pathOffset,pathEnd).toString()!=='/data/hen/shellui_data/icons/hen_settings_icon.png')continue;
+    const imageAddress=executable.virtual+at-executable.file+7+brandedPayload.readInt32LE(at+3),length=brandedPayload.readUInt32LE(at+8);
+    assert.equal(length,menuIcon.length);assert.equal(map(imageAddress,length),iconOffset);iconWriters++;
+  }
+}
+assert.equal(iconWriters,1,'The menu plugin must write the new image using its exact pointer and length.');
+console.log('PASS: the embedded 128x128 RGBA icon matches the asset and the menu plugin image writer.');
 for(const page of ['index.html','loader/jb.html'])for(const match of read(page).matchAll(/(?:src|href)="([^"#]+)"/g)){
   const url=match[1];if(url==='data:,')continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);
 }

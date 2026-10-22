@@ -3,4 +3,5 @@ await rm('dist',{recursive:true,force:true});
 await mkdir('dist',{recursive:true});
 for(const name of ['index.html','style.css','sha256.js','config.js','auth.js','device.js','payloads.js','app.js','entry.js','overlay-plugin-license.txt','LICENSE.loader','.nojekyll'])await copyFile(name,'dist/'+name);
 await cp('loader','dist/loader',{recursive:true});
+await cp('assets','dist/assets',{recursive:true});
 console.log('Built static GitHub Pages files in dist/');
