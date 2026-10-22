@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="referrer" content="same-origin">
-  <title>PS4 HEN 2.2.0</title>
+  <title>PROHEN 2.2.0</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
   <section id="loginPanel">
-    <h1>PS4 HEN 2.2.0</h1>
+    <h1>PROHEN 2.2.0</h1>
     <p>Enter the password to enter the site.</p>
     <form id="loginForm">
       <label for="password">Password</label>
@@ -21,16 +21,16 @@
     <p id="loginError" class="error" role="alert"></p>
   </section>
   <section id="hostPanel" hidden>
-    <h1 id="hostTitle">PS4 HEN 2.2.0</h1>
+    <h1 id="hostTitle">PROHEN 2.2.0</h1>
     <p>PS4 firmware 13.52 only.</p>
-    <p id="overlayNote" hidden>Experimental System Overlay build. Console testing required. Select the former Friends position to show or hide system information.</p>
+    <p id="overlayNote" hidden>Custom PROHEN test build. Console testing required. The former Friends position toggles System Overlay.</p>
     <p id="firmware">Checking device…</p>
     <div class="controls">
       <button id="loadExploit" type="button" disabled>Load exploit</button>
       <button id="toggleAuto" type="button" disabled>Disable auto loading</button>
     </div>
     <p id="status" role="status">Checking firmware…</p>
-    <p><a id="switchBuild" href="?overlay=1">Test System Overlay addition</a></p>
+    <p><a id="switchBuild" href="?original=1">Use original HEN</a></p>
     <p><a href="overlay-plugin-license.txt">Plugin licence</a></p>
     <div class="logout"><button id="logout" type="button">Log out</button></div>
   </section>
@@ -40,6 +40,7 @@
 <script src="sha256.js"></script>
 <script src="auth.js"></script>
 <script src="device.js"></script>
+<script src="payloads.js"></script>
 <script src="app.js"></script>
 <script src="entry.js"></script>
 </body>

@@ -1,6 +1,7 @@
 window.startHENHost=function () {
   "use strict";
-  var overlayTest=window.HEN_OVERLAY_TEST===true;
+  var build=window.HEN_BUILD;
+  var overlayTest=build.manualOnly;
   var loadButton=document.getElementById("loadExploit");
   var autoButton=document.getElementById("toggleAuto");
   var firmwareText=document.getElementById("firmware");
@@ -9,10 +10,9 @@ window.startHENHost=function () {
   var supported=firmware==="13.52", timer=null, deadline=0, autoEnabled=false, busy=false;
   var preferenceKey="hen-autoload-disabled";
   var files=[
-    ["loader/hen.bin",499776,"568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e"],
+    ["loader/"+build.payload[0],build.payload[1],build.payload[2]],
     ["loader/patches/1352.bin",632,"adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e"]
   ];
-  if(overlayTest)files[0]=["loader/hen-system-overlay-test1.bin",500896,"49d372c3eec98c2d308cb8733bebb9a6f73e88cde8297c5fbf12fc895019a214"];
   firmwareText.textContent="Detected: "+(firmware?"PS4 "+firmware:"not a PS4");
   function stopTimer(){if(timer!==null){clearInterval(timer);timer=null;}}
   function savePreference(disabled){try{localStorage.setItem(preferenceKey,disabled?"1":"0");}catch(_){}}
@@ -40,7 +40,7 @@ window.startHENHost=function () {
     statusText.textContent="Checking exploit files…";
     Promise.all(files.map(fileCheck)).then(function(){
       statusText.textContent="Loading exploit…";
-      window.location.assign("loader/jb.html"+(overlayTest?"?overlay=1":""));
+      window.location.assign("loader/jb.html"+build.query);
     }).catch(function(error){
       busy=false;loadButton.disabled=!supported;autoButton.disabled=!supported||overlayTest;
       statusText.textContent=error.message+" Auto loading is stopped.";
@@ -71,7 +71,7 @@ window.startHENHost=function () {
     return;
   }
   loadButton.disabled=false;autoButton.disabled=overlayTest;
-  if(overlayTest){autoButton.textContent="Auto loading disabled";statusText.textContent="System Overlay test build. Select Load exploit to start. Auto loading is disabled.";return;}
+  if(overlayTest){autoButton.textContent="Auto loading disabled";statusText.textContent="PROHEN manual mode. Select Load exploit to start. Auto loading is disabled.";return;}
   var disabled=false;try{disabled=localStorage.getItem(preferenceKey)==="1";}catch(_){}
   if(disabled){autoButton.textContent="Enable auto loading";statusText.textContent="Auto loading disabled. Use Load exploit when ready.";}
   else startAuto();

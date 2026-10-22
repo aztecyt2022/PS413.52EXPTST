@@ -1,8 +1,8 @@
 (function(){
   "use strict";
-  var overlay=/(?:[?&])overlay=1(?:&|$)/.test(location.search||"");
+  var build=window.HEN_BUILD;
   if(!window.HEN_AUTH.allowed()){
-    location.replace("../index.html"+(overlay?"?overlay=1":""));
+    location.replace("../index.html"+build.query);
     return;
   }
   if(!window.HEN_DEVICE.supported){
@@ -11,6 +11,6 @@
     return;
   }
   var module=document.createElement("script");
-  module.type="module";module.src="jb.js?v=22-pages-overlay-test1";
+  module.type="module";module.src="jb.js?v=prohen220-build2";
   document.head.appendChild(module);
 })();

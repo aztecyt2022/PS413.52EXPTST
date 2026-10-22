@@ -8,13 +8,14 @@
   function enterHost(){
     if(started||!window.HEN_AUTH.allowed())return;
     started=true;
-    window.HEN_OVERLAY_TEST=/(?:[?&])overlay=1(?:&|$)/.test(location.search||"");
-    document.getElementById("hostTitle").textContent=window.HEN_OVERLAY_TEST?"HEN + System Overlay test":"PS4 HEN 2.2.0";
-    document.getElementById("overlayNote").hidden=!window.HEN_OVERLAY_TEST;
+    var build=window.HEN_BUILD;
+    window.HEN_OVERLAY_TEST=build.manualOnly;
+    document.getElementById("hostTitle").textContent=build.label+(build.manualOnly?" (manual)":"");
+    document.getElementById("overlayNote").hidden=build.original;
     document.getElementById("toggleAuto").hidden=window.HEN_OVERLAY_TEST;
     var link=document.getElementById("switchBuild");
-    link.href=window.HEN_OVERLAY_TEST?"./":"?overlay=1";
-    link.textContent=window.HEN_OVERLAY_TEST?"Use standard HEN":"Test System Overlay addition";
+    link.href=build.original?"./":"?original=1";
+    link.textContent=build.original?"Use PROHEN":"Use original HEN";
     password.value="";error.textContent="";login.hidden=true;host.hidden=false;
     window.startHENHost();
   }

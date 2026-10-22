@@ -55,7 +55,7 @@ function finishUI(ok) {
   const m = document.getElementById("msg");
   if (m)
     m.textContent = ok
-      ? "HEN payload started"
+      ? window.HEN_BUILD.original ? "HEN payload started" : "PROHEN payload started"
       : armedEver
         ? "Restart your console"
         : "Refresh the page and run again";
@@ -199,9 +199,7 @@ let allDone = false,
 
     const KPATCH_FILE =
       "patches/" + (off.kpatch || fwKey.replace(".", "") + ".bin");
-    const PAYLOAD_FILE = /(?:[?&])overlay=1(?:&|$)/.test(location.search)
-      ? "hen-system-overlay-test1.bin"
-      : off.payload || "payload.bin";
+    const PAYLOAD_FILE = window.HEN_BUILD.payload[0];
     const needPatch = ["k_sysent_661", "k_jmp_rsi"].filter(
       (k) => off[k] === undefined,
     );
