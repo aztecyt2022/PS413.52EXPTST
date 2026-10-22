@@ -1,0 +1,6 @@
+{
+  "name":"aztec-ps4-hen-pages",
+  "private":true,
+  "type":"module",
+  "scripts":{"build":"node scripts/build.mjs","test":"node tests/host.mjs"}
+}

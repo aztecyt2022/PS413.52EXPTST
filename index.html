@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title>PS4 HEN 2.2.0</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <section id="loginPanel">
+    <h1>PS4 HEN 2.2.0</h1>
+    <p>Enter the password to enter the site.</p>
+    <form id="loginForm">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="128" required autofocus>
+      <br><button type="submit">Enter site</button>
+    </form>
+    <p id="loginError" class="error" role="alert"></p>
+  </section>
+  <section id="hostPanel" hidden>
+    <h1 id="hostTitle">PS4 HEN 2.2.0</h1>
+    <p>PS4 firmware 13.52 only.</p>
+    <p id="overlayNote" hidden>Experimental System Overlay build. Console testing required. Select the former Friends position to show or hide system information.</p>
+    <p id="firmware">Checking device…</p>
+    <div class="controls">
+      <button id="loadExploit" type="button" disabled>Load exploit</button>
+      <button id="toggleAuto" type="button" disabled>Disable auto loading</button>
+    </div>
+    <p id="status" role="status">Checking firmware…</p>
+    <p><a id="switchBuild" href="?overlay=1">Test System Overlay addition</a></p>
+    <p><a href="overlay-plugin-license.txt">Plugin licence</a></p>
+    <div class="logout"><button id="logout" type="button">Log out</button></div>
+  </section>
+  <noscript><p>Enable JavaScript to use this host.</p></noscript>
+</main>
+<script src="config.js"></script>
+<script src="sha256.js"></script>
+<script src="auth.js"></script>
+<script src="device.js"></script>
+<script src="app.js"></script>
+<script src="entry.js"></script>
+</body>
+</html>
