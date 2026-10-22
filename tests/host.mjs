@@ -17,7 +17,7 @@ function environment(ua,{overlay=false,original=false,session=new Map(),preferen
   class FakeDate extends Date{static now(){return now;}}
   class XHR{
     open(_method,path){this.path=path;requests.push(path);}
-    send(){pending.push(Promise.resolve().then(()=>{this.status=200;const data=bytes(this.path);if(corrupt&&this.path.endsWith('.bin')&&!this.path.includes('patches/'))data[data.length-1]^=1;this.response=data.buffer;this.onload();}));}
+    send(){pending.push(Promise.resolve().then(()=>{this.status=200;const data=bytes(this.path);if(corrupt&&this.path.split('?')[0].endsWith('.bin')&&!this.path.includes('patches/'))data[data.length-1]^=1;this.response=data.buffer;this.onload();}));}
   }
   const context=vm.createContext({HEN_CONFIG:{passwordHash:testHash},navigator:{userAgent:ua},document:{getElementById:node,createElement:()=>({}),head:{appendChild:element=>modules.push(element)}},sessionStorage:storage(session),localStorage:storage(preference),location:{search:original?'?original=1':overlay?'?overlay=1':'',assign:path=>navigation.push(path),replace:path=>navigation.push(path)},XMLHttpRequest:XHR,Date:FakeDate,Uint8Array,ArrayBuffer,DataView,Int32Array,Promise,unescape,encodeURIComponent,setInterval:fn=>{intervals.set(++next,fn);return next;},clearInterval:id=>intervals.delete(id)});
   context.window=context;
@@ -44,7 +44,7 @@ console.log('PASS: remembered auto-load preference, manual launch, session resto
 for(const ua of ['Desktop browser',ps4('13.50'),ps4('14.00'),ps4('13.52.1'),ps4('13.520'),'Mozilla/5.0 (PlayStation 5 13.52)']){
   const unsupported=environment(ua);unsupported.login();assert.equal(unsupported.node('loadExploit').disabled,true);assert.equal(unsupported.node('toggleAuto').disabled,true);await unsupported.advance(60000);assert.equal(unsupported.requests.length,0);unsupported.loadEntry();assert.equal(unsupported.modules.length,0);
 }
-const overlay=environment(ps4('13.52'),{overlay:true});overlay.login();assert.equal(overlay.intervals.size,0);assert.equal(overlay.node('toggleAuto').disabled,true);await overlay.advance(60000);assert.equal(overlay.requests.length,0);overlay.node('loadExploit').click();await overlay.settle();assert.deepEqual(overlay.navigation,['loader/jb.html?overlay=1']);assert.equal(overlay.requests[0],'loader/prohen.bin');
+const overlay=environment(ps4('13.52'),{overlay:true});overlay.login();assert.equal(overlay.intervals.size,0);assert.equal(overlay.node('toggleAuto').disabled,true);await overlay.advance(60000);assert.equal(overlay.requests.length,0);overlay.node('loadExploit').click();await overlay.settle();assert.deepEqual(overlay.navigation,['loader/jb.html?overlay=1']);assert.equal(overlay.requests[0],'loader/prohen.bin?v=2.2.8-build4');
 for(const option of [{},{overlay:true},{original:true}]){const corrupt=environment(ps4('13.52'),{...option,corrupt:true});corrupt.login();corrupt.node('loadExploit').click();await corrupt.settle();assert.equal(corrupt.navigation.length,0);assert.match(corrupt.node('status').textContent,/verification failed/);assert.equal(corrupt.intervals.size,0);}
 const original=environment(ps4('13.52'),{original:true});original.login();
 assert.equal(original.node('hostTitle').textContent,'PS4 HEN 2.2.0');
@@ -52,8 +52,8 @@ assert.equal(original.node('overlayNote').hidden,true);
 original.node('loadExploit').click();await original.settle();
 assert.deepEqual(original.navigation,['loader/jb.html?original=1']);
 assert.equal(original.requests[0],'loader/hen.bin');
-assert.equal(gated.requests[0],'loader/prohen.bin');
-assert.equal(gated.node('hostTitle').textContent,'PROHEN 2.2.0');
+assert.equal(gated.requests[0],'loader/prohen.bin?v=2.2.8-build4');
+assert.equal(gated.node('hostTitle').textContent,'PROHEN 2.2.8');
 assert.equal(gated.node('overlayNote').hidden,false);
 for(const env of [gated,overlay,original]){
   const declaration=read('loader/jb.js').match(/const PAYLOAD_FILE = ([^;]+);/)[1];
@@ -70,11 +70,11 @@ console.log('PASS: direct loader requires the browser gate and matching firmware
 
 const hashes={
  'loader/hen.bin':['568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e',499776],
- 'loader/prohen.bin':['663761e7dd8e7848c41d416afa5f3021151a4ff340438bc9cc358adaaff8ca15',517920],
+ 'loader/prohen.bin':['f04082626ee6bae2484e72d9a392f24ab5bcfe007e3793a464ff4ab058b54f4f',587904],
  'loader/patches/1352.bin':['adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e',632]
 };
 for(const [path,[hash,size]] of Object.entries(hashes)){const data=bytes(path);assert.equal(data.length,size);assert.equal(createHash('sha256').update(data).digest('hex'),hash);assert.equal(allowedLoader.context.HEN_SHA256(data),hash);}
-for(const page of ['index.html','loader/jb.html'])for(const match of read(page).matchAll(/(?:src|href)="([^"#?]+)"/g)){
+for(const page of ['index.html','loader/jb.html'])for(const match of read(page).matchAll(/(?:src|href)="([^"#]+)"/g)){
   const url=match[1];if(url==='data:,')continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);
 }
 assert(existsSync(new URL('.nojekyll',root)));assert.match(read('README.md'),/not secure access/);assert.doesNotMatch(read('config.js'),/local-test-password/);

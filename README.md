@@ -1,9 +1,9 @@
-# PROHEN 2.2.0 BETA - repair candidate 3
+# PROHEN 2.2.8 BETA - repair candidate 4
 
 A basic static PS4 firmware 13.52 host. The default payload is now PROHEN,
 a custom HEN 2.2.0 BETA build. Its PS4 home-menu title is PROHEN. Settings >
 System > System Information adds the payload name and version beside the
-native firmware text, for example: 13.52 | PROHEN 2.2.0 BETA.
+native firmware text, for example: 13.52 | PROHEN 2.2.8 BETA.
 
 The System Overlay renderer now stays available through PROHEN Settings when
 the optional Friends shortcut cannot be installed. The native Friends entry
@@ -46,14 +46,14 @@ Run npm test and npm run build. There are no package dependencies.
 
 ## Payloads and credits
 
-PROHEN repair candidate 3: 517920 bytes, SHA-256
-663761e7dd8e7848c41d416afa5f3021151a4ff340438bc9cc358adaaff8ca15.
+PROHEN repair candidate 4: 587904 bytes, SHA-256
+f04082626ee6bae2484e72d9a392f24ab5bcfe007e3793a464ff4ab058b54f4f.
 
 Original HEN: Scene-Collective pre-release-main-181, 499776 bytes, SHA-256
 568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e.
 
 PROHEN is a custom fork, not an official upstream release. Full modified source
-and the matching compiled plugin are in [the source bundle](source/PROHEN_2.2.0_FW13.52_Source.zip).
+and the matching compiled plugin are in [the source bundle](source/PROHEN_2.2.8_FW13.52_Source.zip).
 Credits: Scene-Collective, illusiony, Al-Azif, raw13g, OSM-Made and the original
 contributors. See LICENSE.loader and overlay-plugin-license.txt. All bundled
 third-party components retain their licences.
@@ -66,7 +66,7 @@ keeps Settings overlay controls independent of the Friends shortcut. A successfu
 native hook write is checked before startup is marked complete.
 
 After a reboot with enable_plugins=1 and upload_prx=1, expect the notification
-"PROHEN build 3: ShellUI plugin loaded." The plugin records setup stages in
+"PROHEN build 4: ShellUI plugin loaded." The plugin records setup stages in
 /data/hen/prohen-status.log. If the icon or panel still fails, provide that log
 and say whether PROHEN Settings exists in Settings. The diagnostic identifies
 missing exports, delayed metadata, failed hooks, and panel binding failures.
@@ -77,5 +77,19 @@ The actual installed ShellUI plugin path is /data/hen/plugin_mono.prx, as used
 by both the installer and kernel loader. Earlier recovery notes naming
 plugin_shellui.prx were incorrect. No firmware offsets have been added.
 
-This repair candidate is prepared for the owner-authorized GitHub Pages
+PROHEN 2.2.8 build 4 is prepared for the owner-authorized GitHub Pages
 publication. Build and mock checks do not establish real-console success.
+
+## Build 4 optional Mono API repair
+
+The supplied build 3 log confirms a loaded plugin and verified core menu hooks,
+but its runtime export lookup could not bind the overlay/version APIs. Build 4
+adds an optional plugin_mono_api.prx companion whose imports are resolved by the
+PS4 native module linker. The matching payload installs it beside plugin_mono.prx.
+It is loaded only as needed; failure leaves the main menu plugin usable and
+records an explicit error. The extra APIs remain absent from mandatory imports
+in the main plugin. Keep both PRXs from the same build when replacing manually.
+
+After a reboot, expect the build 4 plugin notification and, when the fallback
+is used, "14 optional APIs bound by native-link helper" in prohen-status.log.
+Physical console testing of this new companion and the UI features is pending.
