@@ -11,6 +11,6 @@
     return;
   }
   var module=document.createElement("script");
-  module.type="module";module.src="jb.js?v=prohen220-build2";
+  module.type="module";module.src="jb.js?v=prohen220-build3-local";
   document.head.appendChild(module);
 })();

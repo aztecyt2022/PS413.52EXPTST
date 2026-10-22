@@ -70,7 +70,7 @@ console.log('PASS: direct loader requires the browser gate and matching firmware
 
 const hashes={
  'loader/hen.bin':['568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e',499776],
- 'loader/prohen.bin':['ac645022bf01368f59ebde7bdd17ff8a0c6e2790d12acb72d37ee32d5ccd522a',517440],
+ 'loader/prohen.bin':['663761e7dd8e7848c41d416afa5f3021151a4ff340438bc9cc358adaaff8ca15',517920],
  'loader/patches/1352.bin':['adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e',632]
 };
 for(const [path,[hash,size]] of Object.entries(hashes)){const data=bytes(path);assert.equal(data.length,size);assert.equal(createHash('sha256').update(data).digest('hex'),hash);assert.equal(allowedLoader.context.HEN_SHA256(data),hash);}

@@ -1,13 +1,13 @@
-# PROHEN 2.2.0 BETA - GitHub Pages host
+# PROHEN 2.2.0 BETA - repair candidate 3
 
 A basic static PS4 firmware 13.52 host. The default payload is now PROHEN,
 a custom HEN 2.2.0 BETA build. Its PS4 home-menu title is PROHEN. Settings >
 System > System Information adds the payload name and version beside the
 native firmware text, for example: 13.52 | PROHEN 2.2.0 BETA.
 
-The existing System Overlay addition remains included: the former Friends
-position toggles the native system-information panel, with another toggle in
-PROHEN Settings. Actual PS4 13.52 behavior remains unverified on a console.
+The System Overlay renderer now stays available through PROHEN Settings when
+the optional Friends shortcut cannot be installed. The native Friends entry
+is preserved during startup; its title changes only after its hook succeeds. Actual PS4 13.52 behavior remains unverified on a console.
 Reboot before changing builds; enable_plugins=1 and upload_prx=1 must be set
 in the console's existing hen.ini so the matching ShellUI plugin is installed.
 
@@ -46,8 +46,8 @@ Run npm test and npm run build. There are no package dependencies.
 
 ## Payloads and credits
 
-PROHEN custom build 2: 517440 bytes, SHA-256
-ac645022bf01368f59ebde7bdd17ff8a0c6e2790d12acb72d37ee32d5ccd522a.
+PROHEN repair candidate 3: 517920 bytes, SHA-256
+663761e7dd8e7848c41d416afa5f3021151a4ff340438bc9cc358adaaff8ca15.
 
 Original HEN: Scene-Collective pre-release-main-181, 499776 bytes, SHA-256
 568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e.
@@ -57,3 +57,25 @@ and the matching compiled plugin are in [the source bundle](source/PROHEN_2.2.0_
 Credits: Scene-Collective, illusiony, Al-Azif, raw13g, OSM-Made and the original
 contributors. See LICENSE.loader and overlay-plugin-license.txt. All bundled
 third-party components retain their licences.
+
+## Repair and diagnostics
+
+This candidate fixes delayed ShellUI startup, keeps optional Mono exports from
+blocking the core menu plugin, preserves the offline PS Plus/PROHEN entry, and
+keeps Settings overlay controls independent of the Friends shortcut. A successful
+native hook write is checked before startup is marked complete.
+
+After a reboot with enable_plugins=1 and upload_prx=1, expect the notification
+"PROHEN build 3: ShellUI plugin loaded." The plugin records setup stages in
+/data/hen/prohen-status.log. If the icon or panel still fails, provide that log
+and say whether PROHEN Settings exists in Settings. The diagnostic identifies
+missing exports, delayed metadata, failed hooks, and panel binding failures.
+If no plugin notification or log appears, plugin loading itself still needs
+investigation; this candidate does not claim that issue is confirmed fixed.
+
+The actual installed ShellUI plugin path is /data/hen/plugin_mono.prx, as used
+by both the installer and kernel loader. Earlier recovery notes naming
+plugin_shellui.prx were incorrect. No firmware offsets have been added.
+
+This repair candidate is prepared for the owner-authorized GitHub Pages
+publication. Build and mock checks do not establish real-console success.
