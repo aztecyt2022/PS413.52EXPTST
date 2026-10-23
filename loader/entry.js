@@ -1,6 +1,8 @@
 (function(){
   "use strict";
   var build=window.HEN_BUILD;
+  var diagnosticLink=document.getElementById("diagnostics");
+  if(diagnosticLink)diagnosticLink.href="diagnostics.html"+build.query;
   if(!window.HEN_AUTH.allowed()){
     location.replace("../index.html"+build.query);
     return;
