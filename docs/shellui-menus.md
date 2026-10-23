@@ -33,7 +33,7 @@ Run from the root of this repository:
 
 ```sh
 python3 scripts/build-shellui-preview.py
-python3 -m unittest discover -s tests -p 'test-shellui-preview.py'
+npm run test:shellui
 ```
 
 The generator reads `loader/henacy.bin` and the editable menu XML. It checks the exact reference SHA-256, the original fixed-size native XML slot, menu IDs/handlers, and that only the XML bytes may differ. The preview is written to `dist/henacy-shellui-preview.bin`. It **never overwrites the original payload**. Python's XML parser and size checks run before output is written.

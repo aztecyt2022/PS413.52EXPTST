@@ -1,0 +1,40 @@
+{
+  "version": "0.1.0",
+  "platform": "PS4",
+  "firmware": "13.52",
+  "akari_baseline": "1.2.2",
+  "base_sha256": "ea1235b846b08434123feec9b9c8e3d16cd9447ec31e0bd115df80589aa42352",
+  "runtime_tested_on_ps4": false,
+  "payload_modified_ranges": [
+    [
+      "0x3d450",
+      "0x3d537"
+    ],
+    [
+      "0x39d50",
+      "0x39de6"
+    ],
+    [
+      "0x2c160",
+      "0x2c164"
+    ]
+  ],
+  "files": {
+    "henacy_vsh.prx": {
+      "size": 71488,
+      "sha256": "6a1855e2d703a1c9f967f146814b6c781ef5468de47b1b7165a7e1571734beb2"
+    },
+    "henacy-vsh.bin": {
+      "size": 500448,
+      "sha256": "fabe656438e3fec89d490ecaf0585f829286eef0a9f119954a6e5c677288537f"
+    },
+    "plugin_mono_vsh.prx": {
+      "size": 141152,
+      "sha256": "28cfddc5b3db6bf3973d7bac34f2c436924ea997649192bf88f564332228fcde"
+    },
+    "plugin_mono_original.prx": {
+      "size": 141152,
+      "sha256": "658f69f0539b74f3e06201d877179b26646ba6da67a77419d5ac8e5cee0982aa"
+    }
+  }
+}

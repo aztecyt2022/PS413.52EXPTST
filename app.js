@@ -70,7 +70,7 @@ window.startHENHost=function () {
     return;
   }
   loadButton.disabled=false;autoButton.disabled=false;
-  var disabled=false;try{disabled=localStorage.getItem(preferenceKey)==="1";}catch(_){}
-  if(disabled){autoButton.textContent="Enable auto loading";statusText.textContent="Auto loading disabled. Use Load exploit when ready.";}
+  var disabled=!!build.vsh;try{disabled=disabled||localStorage.getItem(preferenceKey)==="1";}catch(_){}
+  if(disabled){autoButton.textContent="Enable auto loading";statusText.textContent=build.vsh?"VSH test build. Install both native modules first; use Load exploit when ready.":"Auto loading disabled. Use Load exploit when ready.";}
   else startAuto();
 };
