@@ -46,7 +46,7 @@
   }
   var module=document.createElement("script");
   module.type="module";
-  module.src="jb.js?v=henacy-v1-diag-2";
+  module.src="jb.js?v=henacy-v1-diag-3";
   module.onerror=function(){
     fail("Exploit module failed to load","Missing file, unsupported module syntax, or network error.");
   };
