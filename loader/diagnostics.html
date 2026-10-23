@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HENACY v1 — diagnostics</title>
+<style>
+body{margin:0;background:#101014;color:#eee;font:18px Arial,sans-serif}
+main{max-width:850px;margin:0 auto;padding:24px}
+h1{color:#ff6464;font-size:28px}h2{font-size:21px}
+p{line-height:1.5}a{color:#ffc0c0}#results{padding:0;list-style:none}
+#results li{padding:9px 10px;margin:5px 0;border:1px solid #393942;background:#1a1a20;white-space:pre-wrap;overflow-wrap:break-word}
+.ok{border-left:5px solid #69d18f!important}.bad{border-left:5px solid #ff6666!important}
+.warn{border-left:5px solid #ffd166!important}small{color:#ccc}
+</style>
+</head>
+<body>
+<main>
+<h1>HENACY v1 — PS4 Diagnostics</h1>
+<p>This page checks firmware detection, JavaScript support, and hosted files. <strong>It does not start the exploit or modify the console.</strong></p>
+<p><a id="back" href="../index.html">Back to HENACY</a></p>
+<h2 id="headline">Checking the host…</h2>
+<ul id="results" aria-live="polite"></ul>
+<p><small>If checks pass but HENACY still fails, take a photo of the messages on the exploit loader page. Look for PROOF-FAIL, THREW, and the final stage. A working host is not proof of a working kernel exploit.</small></p>
+</main>
+<script src="../device.js"></script>
+<script src="../payloads.js"></script>
+<script src="../sha256.js"></script>
+<script>
+(function(){
+"use strict";
+var results=document.getElementById("results"),headline=document.getElementById("headline");
+var failed=0,pending=0,completed=0,build=window.HEN_BUILD;
+var back=document.getElementById("back");
+if(build)back.href="../index.html"+build.query;
+function line(state,name,message){
+ var item=document.createElement("li");item.className=state;
+ item.textContent=(state==="ok"?"PASS: ":state==="bad"?"FAIL: ":"INFO: ")+name+(message?" — "+message:"");
+ results.appendChild(item);if(state==="bad")failed++;
+}
+function update(){
+ if(pending!==0)return;
+ headline.textContent=failed?"Diagnostics finished — "+failed+" check(s) failed":"Host checks passed — exploit not tested";
+}
+function feature(name,check,description){
+ var ok=false;
+ try{ok=!!check();}catch(_){ok=false;}
+ line(ok?"ok":"bad",name,ok?"available":description);
+}
+line("warn","Firmware","Detected "+(window.HEN_DEVICE&&window.HEN_DEVICE.firmware||"unknown"));
+feature("PS4 firmware 13.52",function(){return window.HEN_DEVICE&&window.HEN_DEVICE.supported;},"The host requires exactly PS4 13.52");
+feature("JavaScript module scripts",function(){return "noModule" in document.createElement("script");},"Browser may ignore the exploit module");
+feature("Promise / Map / Symbol / URLSearchParams",function(){return typeof Promise==="function"&&typeof Map==="function"&&typeof Symbol==="function"&&typeof URLSearchParams==="function";},"A required browser API is unavailable");
+feature("Optional-chaining syntax",function(){return new Function("return ({a:1})?.a")()===1;},"The exploit's JavaScript cannot be parsed");
+feature("BigInt syntax and runtime",function(){return typeof BigInt==="function"&&new Function("return 1n+1n")()===BigInt(2);},"The WebKit primitive requires BigInt support");
+feature("ArrayBuffer XHR",function(){var x=new XMLHttpRequest();x.responseType="arraybuffer";return x.responseType==="arraybuffer";},"Binary downloads cannot be checked");
+feature("SHA-256 verification code",function(){return typeof window.HEN_SHA256==="function";},"sha256.js did not load");
+function resource(name,path,size,hash){
+ pending++;
+ var xhr=new XMLHttpRequest();
+ xhr.open("GET",path,true);xhr.responseType="arraybuffer";xhr.timeout=25000;
+ var done=false;
+ function complete(ok,why){
+  if(done)return;done=true;
+  line(ok?"ok":"bad",name,why);
+  pending--;completed++;update();
+ }
+ xhr.onload=function(){
+  if(xhr.status!==200||!xhr.response){complete(false,"HTTP "+xhr.status+" — missing or unavailable");return;}
+  var arr=new Uint8Array(xhr.response);
+  if(size&&arr.length!==size){complete(false,"size "+arr.length+" (expected "+size+"); possible stale cache");return;}
+  if(hash){
+   if(typeof window.HEN_SHA256!=="function"){complete(false,"hash function missing");return;}
+   try{var digest=window.HEN_SHA256(arr);
+    if(digest!==hash){complete(false,"SHA-256 mismatch; clear PS4 browser cache");return;}
+   }catch(e){complete(false,"hash check error: "+(e.message||e));return;}
+  }
+  complete(true,arr.length+" bytes, HTTP 200"+(hash?", SHA-256 verified":""));
+ };
+ xhr.onerror=function(){complete(false,"network error");};
+ xhr.ontimeout=function(){complete(false,"request timed out");};
+ try{xhr.send();}catch(e){complete(false,"request error: "+(e.message||e));}
+}
+if(build&&build.payload){
+ var files=["jb.js","core.js","mem.js","int64.js","ps4_offsets.js","rpc_worker.js"];
+ for(var i=0;i<files.length;i++)resource(files[i],files[i],0,"");
+ resource(build.original?"Original HEN payload":"HENACY payload",build.payload[0],build.payload[1],build.payload[2]);
+ resource("13.52 kernel patch","patches/1352.bin",632,"adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e");
+}else line("bad","Payload selection","payloads.js did not initialize");
+update();
+})();
+</script>
+</body>
+</html>
