@@ -149,3 +149,11 @@ for(const page of ['index.html','loader/jb.html'])for(const match of read(page).
 assert.match(read('loader/diagnostics.html'),/It does not start the exploit or modify the console/);
 assert(existsSync(new URL('.nojekyll',root)));assert(existsSync(new URL('README.md',root)),'README should exist');assert.doesNotMatch(read('config.js'),/local-test-password/);
 console.log('PASS: HENACY and original payload hashes match; patch bytes preserved; independent checksums match; HTML asset paths work under a project subdirectory.');
+
+const retiredBrand=['PRO','HEN'].join('');
+for(const path of ['README.md','index.html','loader/jb.html','loader/diagnostics.html','entry.js','payloads.js'])
+  assert(!read(path).toUpperCase().includes(retiredBrand), path+' contains obsolete branding');
+assert.match(read('README.md'),/^# HENACY v1/m);
+assert.match(read('index.html'),/<title>HENACY v1<\/title>/);
+assert.match(read('loader/jb.html'),/<title>HENACY v1/);
+console.log('PASS: all public page titles and project description use HENACY branding.');
