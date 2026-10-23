@@ -9,6 +9,7 @@ on:
       - 'scripts/test-system-info.mjs'
       - 'builds/vsh/**'
       - '.github/workflows/henacy-vsh.yml'
+      - 'README.md'
   pull_request:
     paths:
       - 'native/vsh/**'
@@ -16,6 +17,7 @@ on:
       - 'scripts/test-vsh.py'
       - 'builds/vsh/**'
       - '.github/workflows/henacy-vsh.yml'
+      - 'README.md'
 jobs:
   native-host:
     runs-on: ubuntu-latest
