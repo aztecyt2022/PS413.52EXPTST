@@ -87,6 +87,14 @@ def main():
         old_xml=get(ftp,XML,optional=True)
         print("Installed plugin",len(current),sha(current))
         print("Installed menu",None if old_xml is None else (len(old_xml),sha(old_xml)))
+        if b'title="DEXCore v1" file="hen_settings.xml"' in current:
+            print("Outer PS4 Settings label: DEXCore v1")
+        elif b'title="\\xe2\\x98\\x85 HNCY" file="hen_settings.xml"' in current:
+            print("Outer PS4 Settings label: OLD HNCY (PRX needs replacement)")
+        else:
+            print("Outer PS4 Settings label: unknown; verify plugin variant")
+        if old_xml is not None:
+            print("Installed XML menu:", "DEXCore" if b"DEXCore v1" in old_xml else "not DEXCore")
         if a.inspect:return
         if a.restore:
             folder=a.restore.resolve()
@@ -114,8 +122,12 @@ def main():
             print("Restored original PRX; reboot before opening Settings.")
             return
         if sha(current)==sha(new):
-            print("Installed PRX is already the DEXCore build. Check the displayed top-level name and reboot.")
-            return
+            print("Installed PRX matches this DEXCore release.")
+            desired_xml=(ROOT/"hen_settings.xml").read_bytes()
+            if old_xml is not None and old_xml.rstrip(b" ")==desired_xml:
+                print("Installed menu XML also matches. Reboot fully and load default DEXCore.")
+                return
+            raise RuntimeError("PRX matches, but Settings XML differs. Reboot and let the DEXCore plugin regenerate the menu. No changes made.")
         folder=ROOT/("backup-ps4-"+str(address)+"-"+datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S"))
         backups(folder,current,old_xml)
         print("Saved original plugin backup at",folder)
@@ -142,6 +154,6 @@ def main():
 
 if __name__=="__main__":
     try:main()
-    except (OSError,RuntimeError,ValueError,ftplib.all_errors) as exc:
+    except (OSError,RuntimeError,ValueError,ftplib.error_reply,ftplib.error_temp,ftplib.error_perm,ftplib.error_proto) as exc:
         print("FAILED:",exc,file=sys.stderr)
         sys.exit(1)
