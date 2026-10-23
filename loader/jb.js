@@ -3,7 +3,7 @@ import { installWindowP, pairStatus } from "./mem.js";
 import { int64 } from "./int64.js";
 import { offsetsFor } from "./ps4_offsets.js?v=hen220-1352-1";
 
-const outEl = document.getElementById("out");
+window.HEN_LOADER_STARTED = true; // Entry watchdog: all module imports parsed and evaluated.\nconst outEl = document.getElementById("out");
 const stateEl = document.getElementById("state");
 const lines = [];
 let passCount = 0,
@@ -12,18 +12,10 @@ let armedEver = false;
 const params = new URLSearchParams(location.search);
 const STOP_BEFORE_DOUBLE = params.get("stop") === "beforedouble";
 
+// GitHub Pages is static. Its /t endpoint cannot accept POST requests.
+ // Keep diagnostics on the PS4 screen instead of flooding the host with 404s.
 function post(tag, detail) {
-  try {
-    const x = new XMLHttpRequest();
-    x.open("POST", "/t", true);
-    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    x.send(
-      "PS4-JB&tag=" +
-        encodeURIComponent(tag) +
-        "&detail=" +
-        encodeURIComponent(String(detail == null ? "" : detail)),
-    );
-  } catch (e) {}
+  // Intentionally no network telemetry on GitHub Pages.
 }
 
 const VERBOSE = params.get("verbose") === "1";
@@ -48,44 +40,35 @@ function terse(s) {
   return s;
 }
 
-const SHOW_LOG = params.get("log") === "1";
+const SHOW_LOG = params.get("log") !== "0";
 if (SHOW_LOG && document.body) document.body.className = "log";
 function finishUI(ok) {
-  if (SHOW_LOG || !document.body) return;
   const m = document.getElementById("msg");
   if (m)
     m.textContent = ok
       ? window.HEN_BUILD.original ? "HEN payload started" : "HENACY payload started"
       : armedEver
         ? "Restart your console"
-        : "Refresh the page and run again";
-  document.body.className = ok ? "done" : "fail";
+        : "Exploit did not complete — see diagnostic log below";
+  if (document.body) document.body.className = (SHOW_LOG ? "log " : "") + (ok ? "done" : "fail");
 }
 function mark(tag, detail) {
-  const raw = detail;
   detail = terse(detail);
-  lines.push(tag + (detail == null || detail === "" ? "" : "  " + detail));
+  const line = tag + (detail == null || detail === "" ? "" : "  " + detail);
+  lines.push(line);
   if (SHOW_LOG && outEl) {
-    const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-    outEl.innerHTML = lines
-      .map(function (l) {
-        l = esc(l);
-        const c =
-          /FAIL|ERROR|THREW|REBOOT|MISS|LOST|POISON|TIMEOUT|MISMATCH|ABORTED|GIVEUP|NO-STORAGE|UNSEEN/i.test(
-            l,
-          )
-            ? "bad"
-            : /WARN|SKIP|REFUS|COMMITTED|DIRTY/i.test(l)
-              ? "warn"
-              : /\bOK\b|\bPASS\b|PASS=|ACHIEVED|RUNNING|ARMED/i.test(l)
-                ? "ok"
-                : "";
-        return c ? '<span class="' + c + '">' + l + "</span>" : l;
-      })
-      .join("\n");
-    outEl.scrollTop = outEl.scrollHeight;
+    // Append one safe text node per entry. Rebuilding the entire log with innerHTML
+    // caused increasing DOM churn during the exploit's timing-sensitive phases.
+    const node = document.createElement("span");
+    if (/FAIL|ERROR|THREW|REBOOT|MISS|LOST|TIMEOUT|MISMATCH|ABORTED|GIVEUP|NO-STORAGE|UNSEEN/i.test(line)) node.className = "bad";
+    else if (/WARN|SKIP|REFUS|COMMITTED|DIRTY/i.test(line)) node.className = "warn";
+    else if (/\\bOK\\b|\\bPASS\\b|PASS=|ACHIEVED|RUNNING|ARMED/i.test(line)) node.className = "ok";
+    node.textContent = line + "\\n";
+    outEl.appendChild(node);
+    if (lines.length % 12 === 0 || /FAIL|THREW|SUMMARY|PAYLOAD|COMPLETE/.test(tag))
+      outEl.scrollTop = outEl.scrollHeight;
   }
-  post(tag, raw);
+  post(tag, detail);
 }
 
 function trace(tag, detail) {
