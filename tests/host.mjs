@@ -30,13 +30,13 @@ assert.equal(gated.node('hostPanel').hidden,true);assert.equal(gated.intervals.s
 await gated.advance(30000);assert.equal(gated.requests.length,0);
 gated.login('wrong');assert.equal(gated.node('hostPanel').hidden,true);assert.match(gated.node('loginError').textContent,/Incorrect password/);assert.equal(gated.node('password').value,'');
 gated.login();assert.equal(gated.node('hostPanel').hidden,false);assert.equal(gated.node('loginPanel').hidden,true);assert.equal(gated.node('loadExploit').disabled,false);assert.match(gated.node('status').textContent,/10 seconds/);
-await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
+await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html?host=henacy-diag2'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
 console.log('PASS: no countdown or launch before password entry; wrong password gives feedback; correct password starts ten seconds.');
 
 const session=new Map(),preference=new Map(),disabled=environment(ps4('13.52'),{session,preference});
 disabled.login();disabled.node('toggleAuto').click();await disabled.advance(30000);assert.equal(disabled.requests.length,0);
 const remembered=environment(ps4('13.52'),{session,preference});assert.equal(remembered.node('hostPanel').hidden,false);assert.equal(remembered.intervals.size,0);assert.equal(remembered.node('toggleAuto').textContent,'Enable auto loading');
-remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html']);
+remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html?host=henacy-diag2']);
 remembered.node('logout').click();assert.equal(remembered.context.HEN_AUTH.allowed(),false);assert.equal(remembered.navigation.at(-1),'./');
 const blockedStorage=environment(ps4('13.52'),{storageBlocked:true});blockedStorage.login();assert.equal(blockedStorage.node('hostPanel').hidden,true);assert.match(blockedStorage.node('loginError').textContent,/storage/);
 console.log('PASS: remembered auto-load preference, manual launch, session restoration, logout, and storage failure feedback.');
@@ -50,14 +50,14 @@ assert.equal(original.node('hostTitle').textContent,'PS4 HEN 2.2.0');
 assert.equal(original.node('switchBuild').textContent,'Use HENACY v1');
 assert.equal(original.node('switchBuild').href,'./');
 original.node('loadExploit').click();await original.settle();
-assert.deepEqual(original.navigation,['loader/jb.html?original=1']);
+assert.deepEqual(original.navigation,['loader/jb.html?original=1&host=henacy-diag2']);
 assert.equal(original.requests[0],'loader/hen.bin');
 const henacy=environment(ps4('13.52'),{henacy:true});henacy.login();
 assert.equal(henacy.node('hostTitle').textContent,'HENACY v1');
 assert.equal(henacy.node('switchBuild').href,'?original=1');
 assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
 await henacy.advance(10000);
-assert.deepEqual(henacy.navigation,['loader/jb.html']);
+assert.deepEqual(henacy.navigation,['loader/jb.html?host=henacy-diag2']);
 assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
 assert.equal(gated.node('switchBuild').href,'?original=1');
 assert.equal(gated.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
@@ -69,10 +69,10 @@ for(const env of [gated,original,henacy]){
 }
 const diagnostic=environment(ps4('13.52'),{diagnostics:true});
 diagnostic.login();diagnostic.node('loadExploit').click();await diagnostic.settle();
-assert.deepEqual(diagnostic.navigation,['loader/jb.html?log=1']);
+assert.deepEqual(diagnostic.navigation,['loader/jb.html?host=henacy-diag2&log=1']);
 const diagnosticOriginal=environment(ps4('13.52'),{diagnostics:true,original:true});
 diagnosticOriginal.login();diagnosticOriginal.node('loadExploit').click();await diagnosticOriginal.settle();
-assert.deepEqual(diagnosticOriginal.navigation,['loader/jb.html?original=1&log=1']);
+assert.deepEqual(diagnosticOriginal.navigation,['loader/jb.html?original=1&host=henacy-diag2&log=1']);
 console.log('PASS: diagnostic launch keeps the log flag for HENACY and original HEN.');
 const guestOriginal=environment(ps4('13.52'),{original:true});guestOriginal.loadEntry();
 assert.deepEqual(guestOriginal.navigation,['../index.html?original=1']);
