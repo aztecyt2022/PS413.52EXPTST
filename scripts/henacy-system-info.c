@@ -69,7 +69,7 @@ static struct {
 
 static const char suffix[] = " | HENACY v1";
 static const char logo_name[] = "hncy_system_information_logo";
-static const char logo_uri[] = "file:///user/data/hen/shellui_data/icons/hen_settings_icon.png";
+/* Reuse the HNCY menu icon URI (avoid /user/data in System Information). */\nstatic const char logo_uri[] = "file:///data/hen/shellui_data/icons/hen_settings_icon.png";
 
 static size_t length(const char *s) { size_t n = 0; while (s[n]) ++n; return n; }
 static bool equal(const char *a, const char *b) {

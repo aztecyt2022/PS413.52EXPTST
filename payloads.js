@@ -9,6 +9,6 @@
     query:original?"?original=1":"",
     payload:original?
       ["hen.bin",499776,"568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e"]:
-      ["henacy.bin?v=1-sysinfo-529a4fbb76f5",500448,"529a4fbb76f59bfc87917bc8cdd4401289e06734e3d2cbfce6170d754c71c427"]
+      ["henacy.bin?v=1-syslogo-ea1235b846b0",500448,"ea1235b846b08434123feec9b9c8e3d16cd9447ec31e0bd115df80589aa42352"]
   };
 })();

@@ -58,9 +58,9 @@ assert.equal(henacy.node('switchBuild').href,'?original=1');
 assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
 await henacy.advance(10000);
 assert.deepEqual(henacy.navigation,['loader/jb.html']);
-assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-sysinfo-529a4fbb76f5');
+assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
 assert.equal(gated.node('switchBuild').href,'?original=1');
-assert.equal(gated.requests[0],'loader/henacy.bin?v=1-sysinfo-529a4fbb76f5');
+assert.equal(gated.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
 assert.equal(gated.node('hostTitle').textContent,'HENACY v1');
 assert.equal(gated.context.document.title,'HENACY v1');
 for(const env of [gated,original,henacy]){
@@ -81,7 +81,7 @@ await allowedLoader.advance(lifetime+1);assert.equal(allowedLoader.context.HEN_A
 console.log('PASS: direct loader requires the browser gate and matching firmware before it imports the exploit module; sessions expire.');
 
 const hashes={
- 'loader/henacy.bin':['529a4fbb76f59bfc87917bc8cdd4401289e06734e3d2cbfce6170d754c71c427',500448],
+ 'loader/henacy.bin':['ea1235b846b08434123feec9b9c8e3d16cd9447ec31e0bd115df80589aa42352',500448],
  'loader/hen.bin':['568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e',499776],
  'loader/patches/1352.bin':['adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e',632]
 };
@@ -139,7 +139,7 @@ assert(infoEntry>=0x12040&&infoEntry<0x13f80,'Boot must invoke the mapped System
 assert(brandedPayload.includes(Buffer.from('SystemSoftwareVersionInfo\0')));
 assert(brandedPayload.includes(Buffer.from('DisplayVersion\0')));
 assert(brandedPayload.includes(Buffer.from('hncy_system_information_logo\0')));
-assert(brandedPayload.includes(Buffer.from('file:///user/data/hen/shellui_data/icons/hen_settings_icon.png\0')));
+assert(brandedPayload.indexOf(Buffer.from('file:///data/hen/shellui_data/icons/hen_settings_icon.png\0'),0x39000)>0x39000, 'System Information must use the same image URI as the HNCY menu.');
 console.log('PASS: System Information branding is connected to plugin boot and references the native version field and HNCY image.');
 for(const page of ['index.html','loader/jb.html'])for(const match of read(page).matchAll(/(?:src|href)="([^"#]+)"/g)){
   const url=match[1];if(url==='data:,')continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);

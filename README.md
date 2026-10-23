@@ -13,16 +13,16 @@ embedded in the menu plugin. Loading HENACY writes it to
 `/data/hen/shellui_data/icons/hen_settings_icon.png`.
 
 In **Settings → System → System Information**, the System Software row includes
-the native firmware number followed by **HENACY v1**, with the HNCY logo beside
+the native firmware number followed by **HENACY v1**, and attempts to show the HNCY logo beside
 the text. The display extension resolves the managed UI classes at runtime. If
 the optional image loader is unavailable, the version text remains usable.
-The console firmware value itself is unchanged.
+The console firmware value itself is unchanged. This build corrects the System Information image URI to match the menu's image location. Actual image rendering still needs console testing.
 
 Its payload is stored at
 `loader/henacy.bin` (500,448 bytes), with SHA-256:
 
 ```
-529a4fbb76f59bfc87917bc8cdd4401289e06734e3d2cbfce6170d754c71c427
+ea1235b846b08434123feec9b9c8e3d16cd9447ec31e0bd115df80589aa42352
 ```
 
 The host verifies payload size and SHA-256 before launching. HENACY has passed
