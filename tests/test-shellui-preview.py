@@ -1,4 +1,4 @@
-"""Offline tests for the HENACY native ShellUI Settings menu preview builder."""
+"""Offline tests for DEXCore Settings FTP config and safely rebranded candidate."""
 import hashlib
 import importlib.util
 from pathlib import Path
@@ -19,6 +19,16 @@ class NativeShellUIMenuTests(unittest.TestCase):
         old = base[first:last].decode("utf-8").rstrip()
         edited = (ROOT / "shellui" / "hen_settings.xml").read_text("utf-8")
         builder.validate_xml(old, edited)
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(edited)
+        nodes = builder.index_ids(root)
+        assert nodes["id_hen_settings"].get("title") == "★ DEXCore v1"
+        assert nodes["payload_options"].get("initial_focus_to") == "enable_plugins"
+        assert "FTP Server" in nodes["payload_options"].get("title")
+        switch = nodes["enable_plugins"]
+        assert switch.tag == "toggle_switch" and "FTP Server" in switch.get("title")
+        assert switch.get("value") == "0" # actual runtime state comes from HEN INI
+        assert sum(node.get("id") == "enable_plugins" for node in root.iter()) == 1
 
     def test_build_modifies_only_xml_resource(self):
         base_path = ROOT / "loader" / "henacy.bin"
@@ -30,7 +40,16 @@ class NativeShellUIMenuTests(unittest.TestCase):
         self.assertEqual(len(original), len(new))
         self.assertEqual(original[:builder.XML_START], new[:builder.XML_START])
         end = builder.XML_START + builder.XML_SLOT
-        self.assertEqual(original[end:], new[end:])
+        old_suffix = builder.OLD_SUFFIX
+        offset = original.find(old_suffix, *builder.BRAND_REGION)
+        self.assertGreater(offset, end)
+        self.assertEqual(original[end:offset], new[end:offset])
+        self.assertEqual(new[offset:offset + len(old_suffix)],
+                         builder.NEW_SUFFIX.ljust(len(old_suffix), b"\\x00"))
+        self.assertEqual(original[offset+len(old_suffix):], new[offset+len(old_suffix):])
+        self.assertIn(b'DEXCore v1', new[builder.XML_START:end])
+        self.assertIn(b'FTP Server', new[builder.XML_START:end])
+        self.assertIn(b'enable_plugins', new[builder.XML_START:end])
         self.assertIn(b'hncy_tools', new[builder.XML_START:end])
         self.assertIn(b'hncy_packages', new[builder.XML_START:end])
         self.assertIn(b'hncy_system', new[builder.XML_START:end])

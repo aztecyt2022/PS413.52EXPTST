@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Build a TEST-ONLY HENACY PS4 ShellUI menu payload from editable native XML.
+"""Build a TEST-ONLY DEXCore PS4 ShellUI menu payload from editable native XML.
 
-Only the verified, fixed-size HEN settings XML resource is edited. No Sony
-firmware files, kernel patches, executable code, or icon data are modified.
+Only the verified fixed-size native XML and an exactly matched System Information
+version suffix are edited. No firmware data, executable code, or icon is changed.
 """
 import argparse
 import hashlib
@@ -14,6 +14,11 @@ BASE_SHA256 = "ea1235b846b08434123feec9b9c8e3d16cd9447ec31e0bd115df80589aa42352"
 BASE_LENGTH = 500448
 XML_START = 0x386A0
 XML_SLOT = 5069
+# Guarded, shorten-only replacement within the native PUI extension constants.
+# Preserve the original NUL-terminated string allocation exactly.
+OLD_SUFFIX = b" | HENACY v1\\x00".replace(b"\\\\x00", b"\\x00")
+NEW_SUFFIX = b" | DEXCore\\x00"
+BRAND_REGION = (0x39A6D, 0x3C000)
 CONFIG_IDS = {"exploit_fixes", "mmap_patches", "block_updates", "disable_aslr",
               "nobd_patches", "target_id", "skip_patches", "upload_prx", "enable_plugins"}
 ACTION_IDS = {"id_plugin_manager", "id_game_package_installer_hdd",
@@ -77,16 +82,30 @@ def build(base_path, menu_path, output_path):
         raise ValueError(f"Menu XML needs {len(data)} bytes; only {XML_SLOT} available")
     candidate = bytearray(base)
     candidate[XML_START:end] = data.ljust(XML_SLOT, b" ")
-    # Preserve the C-string terminator and all other sections, byte-for-byte.
+    # The originally compiled System Information extension uses this exact
+    # suffix. Patch only its constant data, not its logic or pointers.
+    region_start, region_end = BRAND_REGION
+    offset = base.find(OLD_SUFFIX, region_start, region_end)
+    if offset < 0 or base.find(OLD_SUFFIX, offset + 1, region_end) >= 0:
+        raise ValueError("Unrecognized native System Information brand suffix")
+    if not XML_START + XML_SLOT < offset < region_end - len(OLD_SUFFIX):
+        raise ValueError("Brand suffix collides with Settings XML or plugin boundary")
+    if len(NEW_SUFFIX) > len(OLD_SUFFIX):
+        raise ValueError("Replacement text does not fit verified rodata allocation")
+    patched_suffix = NEW_SUFFIX.ljust(len(OLD_SUFFIX), b"\\x00")
+    candidate[offset:offset + len(OLD_SUFFIX)] = patched_suffix
+    # Preserve every byte outside the two approved, non-overlapping ranges.
     assert candidate[:XML_START] == base[:XML_START]
-    assert candidate[end:] == base[end:]
+    assert candidate[end:offset] == base[end:offset]
+    assert candidate[offset + len(OLD_SUFFIX):] == base[offset + len(OLD_SUFFIX):]
     assert len(candidate) == len(base)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_bytes(candidate)
-    print("Built HENACY ShellUI menu TEST payload:", output_path)
+    print("Built DEXCore ShellUI menu TEST payload:", output_path)
     print("SHA-256:", hashlib.sha256(candidate).hexdigest())
     print("XML resource bytes:", len(data), "/", XML_SLOT)
-    print("Original web payload and firmware patch bytes unchanged.")
+    print("Original web payload, all firmware/kernel bytes, and icon unchanged.")
+    print("Native version suffix patched at:", hex(offset))
     print("PS4 13.52 hardware test: NOT YET VERIFIED")
 
 
@@ -94,7 +113,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", type=Path, default=Path("loader/henacy.bin"))
     parser.add_argument("--xml", type=Path, default=Path("shellui/hen_settings.xml"))
-    parser.add_argument("--output", type=Path, default=Path("dist/henacy-shellui-preview.bin"))
+    parser.add_argument("--output", type=Path, default=Path("dist/dexcore-13.52-test.bin"))
     args = parser.parse_args()
     try:
         build(args.base, args.xml, args.output)

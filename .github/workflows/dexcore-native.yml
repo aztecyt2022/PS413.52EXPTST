@@ -1,0 +1,56 @@
+name: Build DEXCore 13.52 native FTP Settings test kit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'shellui/hen_settings.xml'
+      - 'scripts/build-shellui-preview.py'
+      - 'tests/test-shellui-preview.py'
+      - 'tests/system-info.c'
+      - 'scripts/test-system-info.mjs'
+      - '.github/workflows/dexcore-native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Native Settings XML and existing action-wiring tests
+        run: npm run test:shellui
+      - name: Build native 13.52 DEXCore candidate (never overwrite original HENACY)
+        run: python3 scripts/build-shellui-preview.py --output dist/dexcore-13.52-test.bin
+      - name: Execute real embedded System Information extension in host harness
+        env:
+          DEXCORE_TEST_PAYLOAD: dist/dexcore-13.52-test.bin
+        run: npm run test:native
+      - name: Write test kit manifest
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          f=Path("dist/dexcore-13.52-test.bin")
+          b=f.read_bytes()
+          assert len(b)==500448
+          result={"name":"DEXCore 13.52 native Settings FTP test candidate",
+                  "tested_on_real_ps4":False,"ftp_control":"Existing HEN enable_plugins; restart required",
+                  "binary":f.name,"size":len(b),"sha256":hashlib.sha256(b).hexdigest(),
+                  "legacy_original_payload_unmodified":True}
+          Path("dist/dexcore-manifest.json").write_text(json.dumps(result,indent=2)+"\n")
+          print(json.dumps(result,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DEXCore-13.52-Native-FTP-Settings-Test
+          path: |
+            dist/dexcore-13.52-test.bin
+            dist/dexcore-manifest.json
+          if-no-files-found: error
+          retention-days: 30
