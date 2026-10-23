@@ -49,12 +49,14 @@ const original=environment(ps4('13.52'),{original:true});original.login();
 assert.equal(original.node('hostTitle').textContent,'PS4 HEN 2.2.0');
 assert.equal(original.node('switchBuild').textContent,'Use HENACY v1');
 assert.equal(original.node('switchBuild').href,'./');
+assert.equal(original.node('diagnostics').href,'loader/diagnostics.html?original=1');
 original.node('loadExploit').click();await original.settle();
 assert.deepEqual(original.navigation,['loader/jb.html?original=1']);
 assert.equal(original.requests[0],'loader/hen.bin');
 const henacy=environment(ps4('13.52'),{henacy:true});henacy.login();
 assert.equal(henacy.node('hostTitle').textContent,'HENACY v1');
 assert.equal(henacy.node('switchBuild').href,'?original=1');
+assert.equal(henacy.node('diagnostics').href,'loader/diagnostics.html');
 assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
 await henacy.advance(10000);
 assert.deepEqual(henacy.navigation,['loader/jb.html']);
@@ -144,5 +146,6 @@ console.log('PASS: System Information branding is connected to plugin boot and r
 for(const page of ['index.html','loader/jb.html'])for(const match of read(page).matchAll(/(?:src|href)="([^"#]+)"/g)){
   const url=match[1];if(url==='data:,')continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);
 }
+assert.match(read('loader/diagnostics.html'),/It does not start the exploit or modify the console/);
 assert(existsSync(new URL('.nojekyll',root)));assert.match(read('README.md'),/not secure access/);assert.doesNotMatch(read('config.js'),/local-test-password/);
 console.log('PASS: HENACY and original payload hashes match; patch bytes preserved; independent checksums match; HTML asset paths work under a project subdirectory.');
