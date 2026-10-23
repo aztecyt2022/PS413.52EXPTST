@@ -6,25 +6,16 @@ import { offsetsFor } from "./ps4_offsets.js?v=hen220-1352-1";
 const outEl = document.getElementById("out");
 const stateEl = document.getElementById("state");
 const lines = [];
+window.HENACY_LOADER_STARTED = true;
 let passCount = 0,
   failCount = 0;
 let armedEver = false;
 const params = new URLSearchParams(location.search);
 const STOP_BEFORE_DOUBLE = params.get("stop") === "beforedouble";
 
-function post(tag, detail) {
-  try {
-    const x = new XMLHttpRequest();
-    x.open("POST", "/t", true);
-    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    x.send(
-      "PS4-JB&tag=" +
-        encodeURIComponent(tag) +
-        "&detail=" +
-        encodeURIComponent(String(detail == null ? "" : detail)),
-    );
-  } catch (e) {}
-}
+// The hosted GitHub Pages site has no POST /t receiver. Avoid creating
+// repeated failed telemetry requests during heap-sensitive exploit stages.
+function post(_tag, _detail) {}
 
 const VERBOSE = params.get("verbose") === "1";
 const PROSE = [
@@ -51,16 +42,19 @@ function terse(s) {
 const SHOW_LOG = params.get("log") === "1";
 if (SHOW_LOG && document.body) document.body.className = "log";
 function finishUI(ok) {
-  if (SHOW_LOG || !document.body) return;
+  if (!document.body) return;
   const m = document.getElementById("msg");
   if (m)
     m.textContent = ok
       ? window.HEN_BUILD.original ? "HEN payload started" : "HENACY payload started"
-      : armedEver
-        ? "Restart your console"
-        : "Refresh the page and run again";
-  document.body.className = ok ? "done" : "fail";
+      : armedEver ? "Restart your console" : "Exploit did not finish - see diagnostic log";
+  // Do not change the DOM during sensitive exploit phases. On failure only,
+  // reveal the already buffered log without requiring ?log=1 beforehand.
+  if (!ok && !SHOW_LOG && outEl) outEl.textContent = lines.join("\\n");
+  document.body.className = SHOW_LOG || !ok
+    ? "log " + (ok ? "done" : "fail") : "done";
 }
+
 function mark(tag, detail) {
   const raw = detail;
   detail = terse(detail);
