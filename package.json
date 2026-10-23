@@ -2,5 +2,5 @@
   "name":"aztec-henacy-pages",
   "private":true,
   "type":"module",
-  "scripts":{"build":"node scripts/build.mjs","test":"node tests/host.mjs"}
+  "scripts":{"build":"node scripts/build.mjs","test":"node tests/host.mjs","test:native":"node scripts/test-system-info.mjs"}
 }

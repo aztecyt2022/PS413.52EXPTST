@@ -58,9 +58,9 @@ assert.equal(henacy.node('switchBuild').href,'?original=1');
 assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
 await henacy.advance(10000);
 assert.deepEqual(henacy.navigation,['loader/jb.html']);
-assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-icon-7163545ede8f');
+assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-sysinfo-529a4fbb76f5');
 assert.equal(gated.node('switchBuild').href,'?original=1');
-assert.equal(gated.requests[0],'loader/henacy.bin?v=1-icon-7163545ede8f');
+assert.equal(gated.requests[0],'loader/henacy.bin?v=1-sysinfo-529a4fbb76f5');
 assert.equal(gated.node('hostTitle').textContent,'HENACY v1');
 assert.equal(gated.context.document.title,'HENACY v1');
 for(const env of [gated,original,henacy]){
@@ -81,7 +81,7 @@ await allowedLoader.advance(lifetime+1);assert.equal(allowedLoader.context.HEN_A
 console.log('PASS: direct loader requires the browser gate and matching firmware before it imports the exploit module; sessions expire.');
 
 const hashes={
- 'loader/henacy.bin':['7163545ede8f6990539f73a22f1dc13f1ecd1f9019e7978c8d91a979c197e752',500448],
+ 'loader/henacy.bin':['529a4fbb76f59bfc87917bc8cdd4401289e06734e3d2cbfce6170d754c71c427',500448],
  'loader/hen.bin':['568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e',499776],
  'loader/patches/1352.bin':['adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e',632]
 };
@@ -126,6 +126,21 @@ for(let base=brandedPayload.indexOf(selfMagic);base>=0;base=brandedPayload.index
 }
 assert.equal(iconWriters,1,'The menu plugin must write the new image using its exact pointer and length.');
 console.log('PASS: the embedded 128x128 RGBA icon matches the asset and the menu plugin image writer.');
+const menuSelf=brandedPayload.indexOf(selfMagic,0x29c80);
+assert.equal(menuSelf,0x29c80);
+const menuElf=menuSelf+32+brandedPayload.readUInt16LE(menuSelf+24)*32;
+const menuPh=menuElf+Number(brandedPayload.readBigUInt64LE(menuElf+32));
+const menuStride=brandedPayload.readUInt16LE(menuElf+54);
+assert.equal(Number(brandedPayload.readBigUInt64LE(menuPh+menuStride*2+40)),0x2c00);
+const menuText=menuSelf+Number(brandedPayload.readBigUInt64LE(menuSelf+32+32+8));
+assert.equal(brandedPayload[menuText+0x1d0f],0xe8);
+const infoEntry=0x1d14+brandedPayload.readInt32LE(menuText+0x1d10);
+assert(infoEntry>=0x12040&&infoEntry<0x13f80,'Boot must invoke the mapped System Information extension.');
+assert(brandedPayload.includes(Buffer.from('SystemSoftwareVersionInfo\0')));
+assert(brandedPayload.includes(Buffer.from('DisplayVersion\0')));
+assert(brandedPayload.includes(Buffer.from('hncy_system_information_logo\0')));
+assert(brandedPayload.includes(Buffer.from('file:///user/data/hen/shellui_data/icons/hen_settings_icon.png\0')));
+console.log('PASS: System Information branding is connected to plugin boot and references the native version field and HNCY image.');
 for(const page of ['index.html','loader/jb.html'])for(const match of read(page).matchAll(/(?:src|href)="([^"#]+)"/g)){
   const url=match[1];if(url==='data:,')continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);
 }
