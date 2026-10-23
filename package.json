@@ -1,6 +1,11 @@
 {
-  "name":"aztec-henacy-pages",
-  "private":true,
-  "type":"module",
-  "scripts":{"build":"node scripts/build.mjs","test":"node tests/host.mjs","test:native":"node scripts/test-system-info.mjs"}
+  "name": "aztec-henacy-pages",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node tests/host.mjs",
+    "test:native": "node scripts/test-system-info.mjs",
+    "test:shellui": "python3 -m unittest discover -s tests -p test-shellui-preview.py"
+  }
 }
