@@ -21,8 +21,8 @@ The existing root entry, filenames, internal `hncy_*` IDs and icon paths remain 
 
 Upstream: [HEN configuration](https://github.com/Scene-Collective/ps4-hen/blob/main/installer/source/config.c), [ShellUI write handler](https://github.com/Scene-Collective/ps4-hen-plugins/blob/main/plugin_mono/source/shellui_patch/settings_menu.c), [server plugin](https://github.com/Scene-Collective/ps4-hen-plugins/tree/main/plugin_server/source).
 
-## Native test candidate
+## Active hosted DEXCore binary and recovery
 
-Run `python3 scripts/build-shellui-preview.py --output dist/dexcore-13.52-test.bin` to create a separate, SHA-pinned 13.52 candidate. The native version branding is patched in the same candidate under an exact byte check. The original `loader/henacy.bin` is never overwritten. The [DEXCore native CI job](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml) tests and packages the output.
+Run `python3 scripts/build-shellui-preview.py --output dist/dexcore-13.52-test.bin` to create a separate, SHA-pinned 13.52 candidate. The native version branding is patched in the same candidate under an exact byte check. The CI candidate is copied into `loader/dexcore.bin` and selected by the default PS4 website host after SHA-256 integrity checks. The original `loader/henacy.bin` is never overwritten and is selectable through `?legacy=1`. The [DEXCore native CI job](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml) tests and packages the output.
 
 No Sony firmware code, kernel patch or action ID is modified. **Physical PS4 tests are still required.** Keep backup/recovery access before installation.

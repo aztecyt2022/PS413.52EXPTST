@@ -9,6 +9,8 @@ const ps4=fw=>`Mozilla/5.0 (PlayStation 4 ${fw}) AppleWebKit/605.1.15`;
 const testPassword='local-test-password';
 const testHash=createHash('sha256').update(testPassword).digest('hex');
 const lifetime=8*60*60*1000;
+const promoted=existsSync(new URL('loader/dexcore.bin',root));
+const expectedDefaultPayload=promoted?'loader/dexcore.bin?v=1-edb0fa619aa4':expectedDefaultPayload;
 
 function environment(ua,{original=false,henacy=false,session=new Map(),preference=new Map(),corrupt=false,storageBlocked=false}={}){
   const nodes=new Map(),intervals=new Map(),navigation=[],requests=[],pending=[],modules=[];let now=0,next=0;
@@ -60,11 +62,22 @@ assert.equal(henacy.node('diagnostics').href,'loader/diagnostics.html');
 assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
 await henacy.advance(10000);
 assert.deepEqual(henacy.navigation,['loader/jb.html?v=dexcore-v1-diag-4']);
-assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
+assert.equal(henacy.requests[0],expectedDefaultPayload);
 assert.equal(gated.node('switchBuild').href,'?original=1');
-assert.equal(gated.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
+assert.equal(gated.requests[0],expectedDefaultPayload);
+if(promoted){
+  assert.equal(gated.context.HEN_BUILD.payload[2],'edb0fa619aa48de7858fdc1fb2bee30dd9ec6a367fdd28766707e1aac3e9bdae');
+  const dexcore=Buffer.from(bytes('loader/dexcore.bin'));
+  assert.equal(dexcore.length,500448);
+  assert(dexcore.includes(Buffer.from('DEXCore v1')));
+  assert(dexcore.includes(Buffer.from('FTP Server')));
+  assert(dexcore.includes(Buffer.from(' | DEXCore\\0')));
+  assert.equal(createHash('sha256').update(dexcore).digest('hex'),'edb0fa619aa48de7858fdc1fb2bee30dd9ec6a367fdd28766707e1aac3e9bdae');
+}
+
 assert.equal(gated.node('hostTitle').textContent,'DEXCore v1');
 assert.equal(gated.context.document.title,'DEXCore v1');
+if(promoted) assert.equal(gated.context.HEN_BUILD.payload[0].split('?')[0],'dexcore.bin');
 for(const env of [gated,original,henacy]){
   const declaration=read('loader/jb.js').match(/const PAYLOAD_FILE = ([^;]+);/)[1];
   assert.equal(vm.runInContext(declaration,env.context),env.context.HEN_BUILD.payload[0]);
@@ -75,7 +88,7 @@ const guestHenacy=environment(ps4('13.52'),{henacy:true});guestHenacy.loadEntry(
 assert.equal(guestHenacy.context.document.title,'DEXCore v1');
 assert.equal(guestHenacy.node('loginTitle').textContent,'DEXCore v1');
 assert.deepEqual(guestHenacy.navigation,['../index.html']);
-console.log('PASS: exact PS4 13.52 guard; HENACY is the default; original HEN selection and existing HENACY links load matching payloads; corrupt payloads stop all launch paths.');
+console.log('PASS: exact PS4 13.52 guard; DEXCore brand, payload selection and rollback are consistent; original HEN selection and existing HENACY links load matching payloads; corrupt payloads stop all launch paths.');
 
 // Retired VSH links must never select a removed binary.
 for(const [search,expected] of [['?vsh=1','DEXCore v1'],['?vsh=10','DEXCore v1'],
@@ -87,7 +100,7 @@ for(const [search,expected] of [['?vsh=1','DEXCore v1'],['?vsh=10','DEXCore v1']
   assert(!c.HEN_BUILD.payload[0].includes('builds/vsh'));
   assert.equal(c.HEN_BUILD.query,search.includes('original=1')&&!search.includes('henacy=1')?'?original=1':'');
 }
-console.log('PASS: retired VSH query falls back to standard HENACY / explicitly selected original HEN.');
+console.log('PASS: retired VSH query falls back to default DEXCore / explicitly selected original HEN.');
 
 const guestLoader=environment(ps4('13.52'));guestLoader.loadEntry();assert.deepEqual(guestLoader.navigation,['../index.html']);assert.equal(guestLoader.modules.length,0);
 const allowedLoader=environment(ps4('13.52'));allowedLoader.login();allowedLoader.loadEntry();assert.equal(allowedLoader.modules.length,1);assert.match(allowedLoader.modules[0].src,/^jb.js\?/);
@@ -168,4 +181,4 @@ for(const path of ['README.md','index.html','loader/jb.html','loader/diagnostics
 assert.match(read('README.md'),/^# DEXCore v1/m);
 assert.match(read('index.html'),/<title>DEXCore v1<\/title>/);
 assert.match(read('loader/jb.html'),/<title>DEXCore v1/);
-console.log('PASS: all public page titles and project description use HENACY branding.');
+console.log('PASS: all public page titles and project description use DEXCore branding.');

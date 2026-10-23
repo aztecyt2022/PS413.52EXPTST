@@ -9,11 +9,12 @@ on:
       - 'tests/test-shellui-preview.py'
       - 'tests/system-info.c'
       - 'scripts/test-system-info.mjs'
+      - 'scripts/promote-dexcore.py'
       - '.github/workflows/dexcore-native.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-verify:
@@ -46,6 +47,20 @@ jobs:
           Path("dist/dexcore-manifest.json").write_text(json.dumps(result,indent=2)+"\n")
           print(json.dumps(result,indent=2))
           PY
+      - name: Promote checked DEXCore payload into hosted default
+        run: |
+          python3 scripts/promote-dexcore.py
+          npm test
+          npm run build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add loader/dexcore.bin payloads.js
+          if git diff --staged --quiet; then
+            echo "DEXCore default already current"
+          else
+            git commit -m "Promote verified DEXCore 13.52 payload as default (retain HENACY legacy)"
+            git push origin HEAD:main
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: DEXCore-13.52-Native-FTP-Settings-Test

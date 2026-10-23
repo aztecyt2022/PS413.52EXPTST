@@ -4,12 +4,12 @@
 
 **Website:** https://aztecyt2022.github.io/PS413.52EXPTST/
 
-The default host displays DEXCore branding. Its previous verified HENACY binary and the original HEN option are retained as unchanged rollback inputs.
+The default host loads the actual DEXCore native Settings payload, **not just a renamed web page**. Its previous verified HENACY binary and original HEN remain unmodified for rollback (`?legacy=1` and `?original=1`).
 
 ## FTP server in the PS4 Settings menu
 
 The updated native menu is **★ DEXCore v1 → FTP Server / Payload Options → FTP Server + Plugins (Restart Required)**. This is the original HEN `enable_plugins` configuration toggle. On a successfully loaded HEN installation with the bundled server plugin, it enables FTP on **TCP 2121** along with kernel logging and other plugins when HEN is reloaded. It does **not** stop/start FTP immediately or independently. Keep FTP disabled outside a trusted LAN.
 
-The native menu changes are prepared as a **separate test candidate**, not silently installed into the standard payload. Check the [DEXCore PS4 build artifacts](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml) and [Settings implementation notes](docs/shellui-menus.md). PS4 hardware validation remains necessary.
+The verified DEXCore native menu candidate is now promoted to `loader/dexcore.bin` as the website's default payload. This is not an on-console ShellUI-plugin installer: reboot/reload HEN on PS4 after switching builds. Check the [DEXCore PS4 build artifacts](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml) and [Settings implementation notes](docs/shellui-menus.md). PS4 hardware validation remains necessary.
 
 The discontinued VSH/XMB overlay is not being restored. If you previously installed a VSH test plugin, restore your console-specific `plugin_mono.prx` backup and reboot before testing DEXCore.
