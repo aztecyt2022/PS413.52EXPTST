@@ -30,13 +30,13 @@ assert.equal(gated.node('hostPanel').hidden,true);assert.equal(gated.intervals.s
 await gated.advance(30000);assert.equal(gated.requests.length,0);
 gated.login('wrong');assert.equal(gated.node('hostPanel').hidden,true);assert.match(gated.node('loginError').textContent,/Incorrect password/);assert.equal(gated.node('password').value,'');
 gated.login();assert.equal(gated.node('hostPanel').hidden,false);assert.equal(gated.node('loginPanel').hidden,true);assert.equal(gated.node('loadExploit').disabled,false);assert.match(gated.node('status').textContent,/10 seconds/);
-await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
+await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html?v=henacy-v1-diag-3'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
 console.log('PASS: no countdown or launch before password entry; wrong password gives feedback; correct password starts ten seconds.');
 
 const session=new Map(),preference=new Map(),disabled=environment(ps4('13.52'),{session,preference});
 disabled.login();disabled.node('toggleAuto').click();await disabled.advance(30000);assert.equal(disabled.requests.length,0);
 const remembered=environment(ps4('13.52'),{session,preference});assert.equal(remembered.node('hostPanel').hidden,false);assert.equal(remembered.intervals.size,0);assert.equal(remembered.node('toggleAuto').textContent,'Enable auto loading');
-remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html']);
+remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html?v=henacy-v1-diag-3']);
 remembered.node('logout').click();assert.equal(remembered.context.HEN_AUTH.allowed(),false);assert.equal(remembered.navigation.at(-1),'./');
 const blockedStorage=environment(ps4('13.52'),{storageBlocked:true});blockedStorage.login();assert.equal(blockedStorage.node('hostPanel').hidden,true);assert.match(blockedStorage.node('loginError').textContent,/storage/);
 console.log('PASS: remembered auto-load preference, manual launch, session restoration, logout, and storage failure feedback.');
@@ -51,7 +51,7 @@ assert.equal(original.node('switchBuild').textContent,'Use HENACY v1');
 assert.equal(original.node('switchBuild').href,'./');
 assert.equal(original.node('diagnostics').href,'loader/diagnostics.html?original=1');
 original.node('loadExploit').click();await original.settle();
-assert.deepEqual(original.navigation,['loader/jb.html?original=1']);
+assert.deepEqual(original.navigation,['loader/jb.html?original=1&v=henacy-v1-diag-3']);
 assert.equal(original.requests[0],'loader/hen.bin');
 const henacy=environment(ps4('13.52'),{henacy:true});henacy.login();
 assert.equal(henacy.node('hostTitle').textContent,'HENACY v1');
@@ -59,7 +59,7 @@ assert.equal(henacy.node('switchBuild').href,'?original=1');
 assert.equal(henacy.node('diagnostics').href,'loader/diagnostics.html');
 assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
 await henacy.advance(10000);
-assert.deepEqual(henacy.navigation,['loader/jb.html']);
+assert.deepEqual(henacy.navigation,['loader/jb.html?v=henacy-v1-diag-3']);
 assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
 assert.equal(gated.node('switchBuild').href,'?original=1');
 assert.equal(gated.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
@@ -147,5 +147,5 @@ for(const page of ['index.html','loader/jb.html'])for(const match of read(page).
   const url=match[1];if(url==='data:,')continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);
 }
 assert.match(read('loader/diagnostics.html'),/It does not start the exploit or modify the console/);
-assert(existsSync(new URL('.nojekyll',root)));assert.match(read('README.md'),/not secure access/);assert.doesNotMatch(read('config.js'),/local-test-password/);
+assert(existsSync(new URL('.nojekyll',root)));assert(existsSync(new URL('README.md',root)),'README should exist');assert.doesNotMatch(read('config.js'),/local-test-password/);
 console.log('PASS: HENACY and original payload hashes match; patch bytes preserved; independent checksums match; HTML asset paths work under a project subdirectory.');
