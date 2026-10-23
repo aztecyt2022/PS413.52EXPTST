@@ -3,7 +3,8 @@ import { installWindowP, pairStatus } from "./mem.js";
 import { int64 } from "./int64.js";
 import { offsetsFor } from "./ps4_offsets.js?v=hen220-1352-1";
 
-window.HEN_LOADER_STARTED = true; // Entry watchdog: all module imports parsed and evaluated.\nconst outEl = document.getElementById("out");
+window.HEN_LOADER_STARTED = true; // Entry watchdog: all module imports parsed and evaluated.
+const outEl = document.getElementById("out");
 const stateEl = document.getElementById("state");
 const lines = [];
 let passCount = 0,
@@ -62,8 +63,8 @@ function mark(tag, detail) {
     const node = document.createElement("span");
     if (/FAIL|ERROR|THREW|REBOOT|MISS|LOST|TIMEOUT|MISMATCH|ABORTED|GIVEUP|NO-STORAGE|UNSEEN/i.test(line)) node.className = "bad";
     else if (/WARN|SKIP|REFUS|COMMITTED|DIRTY/i.test(line)) node.className = "warn";
-    else if (/\\bOK\\b|\\bPASS\\b|PASS=|ACHIEVED|RUNNING|ARMED/i.test(line)) node.className = "ok";
-    node.textContent = line + "\\n";
+    else if (/\bOK\b|\bPASS\b|PASS=|ACHIEVED|RUNNING|ARMED/i.test(line)) node.className = "ok";
+    node.textContent = line + "\n";
     outEl.appendChild(node);
     if (lines.length % 12 === 0 || /FAIL|THREW|SUMMARY|PAYLOAD|COMPLETE/.test(tag))
       outEl.scrollTop = outEl.scrollHeight;
