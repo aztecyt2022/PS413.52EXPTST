@@ -56,7 +56,7 @@ int main(void) {
     firmware = 0x13500001; assert(HNCY_VshStart(&api) == -2);
     firmware = 0x13520001; assert(HNCY_VshStart(&api) == -3);
     assert(!started && !atomic_load(&home_ready) && !read_hook.installed && !state_hook.installed && !update_hook.installed);
-    vsh_init(&menu); atomic_store(&home_ready, true);
+    vsh_init(&menu); atomic_store(&home_ready, true); atomic_store(&last_frame, clock_us);
     VshPadData pad = {.buttons = VSH_CHORD, .connected = 1, .timestamp = 1};
     pad.orientation[0] = 0.25f; pad.count = 9;
     filter_pad(10, &pad); assert(menu.open && menu.draining);
@@ -70,6 +70,12 @@ int main(void) {
     pad.timestamp = 4; pad.buttons = VSH_CROSS; filter_pad(10, &pad); assert(menu.config.stats == 1);
     state_hook.trampoline = (void *)disconnected;
     assert(pad_state(10, &pad) == -1); assert(!menu.open && menu.owner == -1);
+    /* A stalled UI must stop capture even if the pad sample is duplicated. */
+    vsh_init(&menu); menu.open = true; menu.owner = 10;
+    last_pad_timestamp = pad.timestamp; last_pad_handle = 10; last_pad_consumed = true;
+    clock_us += 600000; filter_pad(10, &pad); assert(!menu.open);
+    pad.buttons = 0; filter_pad(10, &pad);
+    pad.buttons = VSH_CROSS; filter_pad(10, &pad); assert(pad.buttons == VSH_CROSS);
     vsh_init(&menu); menu.config.theme = 2; menu.config.opacity = 95;
     assert(save_config(&menu.config)); assert(access(config_temp, F_OK) != 0);
     vsh_init(&menu); read_config(); assert(menu.config.theme == 2 && menu.config.opacity == 95);

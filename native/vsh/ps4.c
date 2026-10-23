@@ -19,6 +19,7 @@ static HncyVshHost host;
 static VshMenu menu;
 static atomic_flag input_lock = ATOMIC_FLAG_INIT;
 static atomic_bool home_ready;
+static atomic_uint_fast64_t last_frame;
 static bool started, ui_failed, residency_required;
 static VshHook update_hook, read_hook, state_hook;
 static VshModuleInfo pad_module;
@@ -242,13 +243,17 @@ static bool prepare_pad(void) {
 }
 static void filter_pad(int handle, VshPadData *p) {
     lock();
+    uint64_t now = sceKernelGetProcessTime();
+    bool ready = atomic_load(&home_ready) && now - atomic_load(&last_frame) <= 500000;
     /* ReadState may internally call Read. Never process the same sample twice. */
     bool consume;
-    if (p->timestamp && p->timestamp == last_pad_timestamp && handle == last_pad_handle)
+    if (!ready) {
+        consume = vsh_input(&menu, handle, p->buttons, p->connected != 0, false, now);
+        last_pad_timestamp = 0;
+    } else if (p->timestamp && p->timestamp == last_pad_timestamp && handle == last_pad_handle)
         consume = last_pad_consumed;
     else {
-        consume = vsh_input(&menu, handle, p->buttons, p->connected != 0,
-                            atomic_load(&home_ready), sceKernelGetProcessTime());
+        consume = vsh_input(&menu, handle, p->buttons, p->connected != 0, true, now);
         last_pad_timestamp = p->timestamp; last_pad_handle = handle; last_pad_consumed = consume;
     }
     unlock();
@@ -399,6 +404,7 @@ static void update(void *application) {
     ((void (*)(void *))update_hook.trampoline)(application);
     if (ui_failed) return;
     uint64_t now = sceKernelGetProcessTime(), old_sample = sample_time;
+    atomic_store(&last_frame, now);
     sample_stats(now);
     if (!current_root()) {
         atomic_store(&home_ready, false);

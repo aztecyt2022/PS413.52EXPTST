@@ -14,7 +14,7 @@ Press **L3 + R3** together on the PS4 home screen. Release both after opening. U
 - **About:** Akari attribution and the PS4 SHARE screenshot shortcut.
 - **Disable until reboot:** removes widgets and releases input. The small native hooks stay resident and pass input through until ShellUI exits.
 
-The panel is sized against the PS4 UI canvas. Controller input is captured inside ShellUI while the menu is open; the opening/closing button press is drained until release. Game executables are not patched.
+The panel is sized against the PS4 UI canvas. Controller input is captured inside ShellUI while the menu is open; the opening/closing button press is drained until release. If ShellUI stops updating for over half a second, input capture is released. Game executables are not patched.
 
 ## Install the test kit on Windows
 
