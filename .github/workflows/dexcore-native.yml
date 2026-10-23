@@ -7,6 +7,8 @@ on:
       - 'shellui/hen_settings.xml'
       - 'scripts/build-shellui-preview.py'
       - 'tests/test-shellui-preview.py'
+      - 'tests/host.mjs'
+      - 'payloads.js'
       - 'tests/system-info.c'
       - 'scripts/test-system-info.mjs'
       - 'scripts/promote-dexcore.py'
