@@ -50,7 +50,7 @@ function finishUI(ok) {
       : armedEver ? "Restart your console" : "Exploit did not finish - see diagnostic log";
   // Do not change the DOM during sensitive exploit phases. On failure only,
   // reveal the already buffered log without requiring ?log=1 beforehand.
-  if (!ok && !SHOW_LOG && outEl) outEl.textContent = lines.join("\\n");
+  if (!ok && !SHOW_LOG && outEl) outEl.textContent = lines.join("\n");
   document.body.className = SHOW_LOG || !ok
     ? "log " + (ok ? "done" : "fail") : "done";
 }
