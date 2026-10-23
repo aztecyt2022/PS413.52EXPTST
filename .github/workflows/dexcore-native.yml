@@ -49,6 +49,15 @@ jobs:
           Path("dist/dexcore-manifest.json").write_text(json.dumps(result,indent=2)+"\n")
           print(json.dumps(result,indent=2))
           PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DEXCore-13.52-Native-FTP-Settings-Test
+          path: |
+            dist/dexcore-13.52-test.bin
+            dist/dexcore-manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Promote checked DEXCore payload into hosted default
         run: |
           python3 scripts/promote-dexcore.py
@@ -63,11 +72,3 @@ jobs:
             git commit -m "Promote verified DEXCore 13.52 payload as default (retain HENACY legacy)"
             git push origin HEAD:main
           fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: DEXCore-13.52-Native-FTP-Settings-Test
-          path: |
-            dist/dexcore-13.52-test.bin
-            dist/dexcore-manifest.json
-          if-no-files-found: error
-          retention-days: 30
