@@ -1,45 +1,28 @@
-# HENACY v1 — Native PS4 ShellUI menus
+# DEXCore v1 — Native PS4 Settings menu
 
-This directory is for **PS4 ShellUI/Mono menus, not HTML, GitHub Pages, or XAMPP**.
-
-## Current native Settings integration
-
-The checked `loader/henacy.bin` contains an embedded `plugin_mono` XML resource named `hen_settings.xml`. That resource is rendered inside **PS4 Settings → ★ HNCY** after its plugin has loaded.
-
-Editable menu source: [`shellui/hen_settings.xml`](../shellui/hen_settings.xml).
-
-The proposed native layout is:
+This is a native PS4 Settings XML menu; **not** a VSH/XMB overlay.
 
 ```
 PS4 Settings
-  ★ HNCY
-    ★ HENACY v1
-      ★ Payload Options (Restart Required)
-        Existing HEN configuration toggles (unchanged IDs)
-      HENACY Tools
+  ★ HNCY (legacy PS4 native Settings entry)
+    ★ DEXCore v1
+      ★ FTP Server / Payload Options
+        FTP Server + Plugins (Restart Required)
+        Existing firmware/payload toggles
+      DEXCore Tools
         Plugin Manager
         Package Manager
-          Install Package from Hard Disk
-          Install Package from USB Storage
       System
-        Restart ShellUI
 ```
 
-Existing toggle IDs, link targets, confirm prompts, and action/button IDs are preserved. This is a **navigation/layout change**, not implementation of new untested system functions.
+The existing root entry, filenames, internal `hncy_*` IDs and icon paths remain for compatibility with the compiled PS4 Mono hook.
 
-## Generate a preview without changing the live site
+**FTP semantics:** The new visible FTP setting is the existing HEN `enable_plugins` toggle, kept on the `payload_options` page where the upstream ShellUI handler persists it. Enabling plugins allows the bundled HEN `plugin_server` to start FTP on port **2121** and kernel logging on **3232** after HEN is reloaded. It is not a standalone FTP-only toggle, does not report listening state, and is unsuitable for untrusted networks. The server must be installed and load successfully.
 
-Run from the root of this repository:
+Upstream: [HEN configuration](https://github.com/Scene-Collective/ps4-hen/blob/main/installer/source/config.c), [ShellUI write handler](https://github.com/Scene-Collective/ps4-hen-plugins/blob/main/plugin_mono/source/shellui_patch/settings_menu.c), [server plugin](https://github.com/Scene-Collective/ps4-hen-plugins/tree/main/plugin_server/source).
 
-```sh
-python3 scripts/build-shellui-preview.py
-npm run test:shellui
-```
+## Native test candidate
 
-The generator reads `loader/henacy.bin` and the editable menu XML. It checks the exact reference SHA-256, the original fixed-size native XML slot, menu IDs/handlers, and that only the XML bytes may differ. The preview is written to `dist/henacy-shellui-preview.bin`. It **never overwrites the original payload**. Python's XML parser and size checks run before output is written.
+Run `python3 scripts/build-shellui-preview.py --output dist/dexcore-13.52-test.bin` to create a separate, SHA-pinned 13.52 candidate. The native version branding is patched in the same candidate under an exact byte check. The original `loader/henacy.bin` is never overwritten. The [DEXCore native CI job](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml) tests and packages the output.
 
-The preview is **not loaded by the GitHub Pages website** and cannot be assumed to work until tested on a PS4 running the intended firmware. Do not replace an installed plugin or firmware file blindly; keep the original payload and a way to restart ShellUI if testing causes UI instability.
-
-## Scope
-
-This document describes the original HENACY Settings menu and offline XML preview only. The experimental VSH/XMB overlay has been retired; no floating overlay code, controller hook, or VSH test payload is part of the active host.
+No Sony firmware code, kernel patch or action ID is modified. **Physical PS4 tests are still required.** Keep backup/recovery access before installation.

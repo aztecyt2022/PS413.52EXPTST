@@ -1,11 +1,15 @@
-# HENACY v1 — PS4 13.52
+# DEXCore v1 — PS4 13.52
 
-**HENACY v1** is the default PS4 firmware **13.52** homebrew host.
+**DEXCore** is the new name for the HENACY PS4 13.52 homebrew host.
 
 **Website:** https://aztecyt2022.github.io/PS413.52EXPTST/
 
-The standard HENACY and original HEN payload choices remain available. HENACY's original PS4 Settings integration (`★ HNCY`) and System Information branding are retained. See [native Settings notes](docs/shellui-menus.md).
+The default host displays DEXCore branding. Its previous verified HENACY binary and the original HEN option are retained as unchanged rollback inputs.
 
-The experimental VSH/XMB overlay and its downloads and installers have been retired. The default HENACY and original HEN payloads are unchanged.
+## FTP server in the PS4 Settings menu
 
-**Previously installed VSH overlay?** Deleting repository files does not uninstall a console plugin. Use `RESTORE.cmd` and the console-specific original plugin backup from your previously downloaded VSH test kit, then reboot before using the regular HENACY host. Keep your backup until restoration succeeds.
+The updated native menu is **★ DEXCore v1 → FTP Server / Payload Options → FTP Server + Plugins (Restart Required)**. This is the original HEN `enable_plugins` configuration toggle. On a successfully loaded HEN installation with the bundled server plugin, it enables FTP on **TCP 2121** along with kernel logging and other plugins when HEN is reloaded. It does **not** stop/start FTP immediately or independently. Keep FTP disabled outside a trusted LAN.
+
+The native menu changes are prepared as a **separate test candidate**, not silently installed into the standard payload. Check the [DEXCore PS4 build artifacts](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml) and [Settings implementation notes](docs/shellui-menus.md). PS4 hardware validation remains necessary.
+
+The discontinued VSH/XMB overlay is not being restored. If you previously installed a VSH test plugin, restore your console-specific `plugin_mono.prx` backup and reboot before testing DEXCore.
