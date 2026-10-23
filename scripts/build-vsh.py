@@ -96,11 +96,14 @@ def main():
     parser.add_argument("--sdk", type=Path, default=os.environ.get("OO_PS4_TOOLCHAIN"))
     parser.add_argument("--cc", default="clang")
     parser.add_argument("--ld", default="ld.lld")
-    parser.add_argument("--out", type=Path, default=ROOT / "builds/vsh")
+    parser.add_argument("--out", type=Path, default=ROOT / "builds/vsh-v1.2")
     args = parser.parse_args()
     if args.sdk is None:
         parser.error("Pass --sdk or set OO_PS4_TOOLCHAIN")
-    sdk = args.sdk.resolve(); out = args.out.resolve(); out.mkdir(parents=True, exist_ok=True)
+    sdk = args.sdk.resolve(); out = args.out.resolve()
+    if out == (ROOT / "builds/vsh").resolve():
+        parser.error("Refusing to overwrite the verified VSH 0.1 recovery build")
+    out.mkdir(parents=True, exist_ok=True)
     os.environ["OO_PS4_TOOLCHAIN"] = str(sdk)
     if not (sdk / "bin/linux/create-fself").is_file():
         parser.error("OpenOrbis v0.5.4 SDK not found")
@@ -157,7 +160,7 @@ ASSERT(ADDR(.rodata) + SIZEOF(.rodata) <= 0x1081a, "Bootstrap constants overflow
             raise ValueError("Embedded plugin_mono SELF size changed")
         (out / "plugin_mono_vsh.prx").write_bytes(candidate[SELF:SELF + mono_size])
         (out / "plugin_mono_original.prx").write_bytes(base[SELF:SELF + mono_size])
-        manifest = {"version": "0.1.0", "platform": "PS4", "firmware": "13.52",
+        manifest = {"version": "1.2.0", "platform": "PS4", "firmware": "13.52",
                     "akari_baseline": "1.2.2", "base_sha256": BASE_SHA,
                     "runtime_tested_on_ps4": False,
                     "payload_modified_ranges": [[hex(a), hex(b)] for a, b in ranges], "files": {}}

@@ -77,3 +77,11 @@ Host checks exercise native menu logic, the PS4 pad structure/filter, nested pad
 ## V1.2 progress and known limitation
 
 The original 13.52 payload, the existing VSH PRX/test kit and PS4 firmware offsets have not been replaced with untested output. The V1.2 menu source is updated, but **the downloadable 0.1 binaries must not be called V1.2** until rebuilt with OpenOrbis and tested on a physical PS4. The FTP/payload/klog menu is an honest integration point, not a functional native service controller yet. The original HEN `plugin_server` typically runs FTP and klog in a separate daemon process; these cannot safely be toggled merely by changing a ShellUI boolean. A separate service backend with ownership-aware lifecycle, fault handling and console verification is required before enabling those actions.
+
+## Build HENACY V1.2 for the actual PS4 home menu
+
+The main PS4 XMB/ShellUI overlay is implemented by the **native PRX**, not by `vsh.html` or JavaScript. The web host's role is to load the bootstrap; when the native PRX has been installed through FTP and ShellUI starts, **L3 + R3** opens the overlay from the PS4 home screen. It is not an independent Sony Settings tile, and it cannot render over arbitrary games.
+
+A [dedicated GitHub Actions native build workflow](../../.github/workflows/build-henacy-vsh.yml) compiles the new source with OpenOrbis v0.5.4 into `HENACY-VSH-1.2-PS4-Test-Kit.zip` as a downloadable artifact. Its files are kept separate from `builds/vsh/`, which contains the original 0.1 recovery build. Use the V1.2 kit's `INSTALL.cmd` and `RESTORE.cmd` for install/recovery, and run the normal PS4 13.52 payload with `?vsh=1`. **A successful build is not proof of PS4 runtime compatibility**: check the log and run the physical PS4 checks above before normal use.
+
+The service-control rows cannot start or stop existing HEN FTP/klog processes until a supported, independently validated daemon IPC layer is implemented; no fake control is shown.
