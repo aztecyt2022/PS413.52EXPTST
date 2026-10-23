@@ -17,3 +17,7 @@ To test the host, run `npm test`. To run the native System Information simulatio
 ## PlayStation Store home-screen tile
 
 A reversible **HENACY v1** replacement for the PlayStation Store home-screen tile is under investigation. This is **not active in the current payload**: the existing `★ HNCY` Settings menu is a separate ShellUI feature. See [the Store tile plan](docs/store-tile-plan.md) and run `python3 scripts/inspect-home-tiles.py /path/to/app.db` to inspect an offline database copy **without changing it**. A real HENACY launcher and a validated restoration path are required before enabling the Store tile override.
+
+## Native ShellUI Settings menu
+
+The PS4 ShellUI menu is now editable in [`shellui/hen_settings.xml`](shellui/hen_settings.xml). The test-only builder [`scripts/build-shellui-preview.py`](scripts/build-shellui-preview.py) creates a separate PS4 native menu preview payload and preserves the current website payload. See [`docs/shellui-menus.md`](docs/shellui-menus.md) for menu layout, safety checks and testing instructions. This is a Settings menu layout revision, **not yet** a global XMB popup; firmware 13.52 runtime testing is still required.
