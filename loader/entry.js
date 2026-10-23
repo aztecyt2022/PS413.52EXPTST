@@ -17,7 +17,7 @@
     var out=document.getElementById("out");
     if(title)title.textContent="Exploit loader error";
     if(state)state.textContent=message;
-    if(out)out.textContent += (out.textContent?"\\n":"")+message;
+    if(out)out.textContent += (out.textContent?"\n":"")+message;
     if(document.body)document.body.className="log fail";
   }
   if(window.addEventListener){
