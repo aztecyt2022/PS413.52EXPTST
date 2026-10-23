@@ -12,7 +12,7 @@ import re
 import struct
 
 ROOT=Path(__file__).resolve().parents[1]
-SOURCE_SHA="edb0fa619aa48de7858fdc1fb2bee30dd9ec6a367fdd28766707e1aac3e9bdae"
+SOURCE_SHA="32944c31cef6266d8b7857c2c5c41690b6b871236c1f8d422f84f707fe22c9d7"
 START=0x29C80
 END=0x4C3E0
 XML_OFFSET=0x386A0
@@ -31,6 +31,11 @@ def generate(source: Path, output: Path):
     if not (0<n<64 and data[elf:elf+4]==b"\x7fELF"):
         raise ValueError("Embedded PRX ELF header invalid")
     plugin=data[START:END]
+    # The separate top-level Settings menu label must not remain HNCY.
+    if b'title="DEXCore v1" file="hen_settings.xml"' not in plugin:
+        raise ValueError("Outer PS4 Settings label was not rebranded")
+    if b'title="\xe2\x98\x85 HNCY" file="hen_settings.xml"' in plugin:
+        raise ValueError("Legacy outer PS4 Settings label still embedded")
     if len(plugin)!=141152 or not plugin[XML_OFFSET-START:XML_OFFSET-START+24].startswith(b"<?xml version"):
         raise ValueError("Native Settings XML is not in expected plugin range")
     raw_xml=data[XML_OFFSET:XML_OFFSET+XML_SIZE].rstrip(b" ")

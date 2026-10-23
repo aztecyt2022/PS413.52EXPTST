@@ -2,7 +2,7 @@
 
 The DEXCore **web page and loader binary are already correctly branded**. The PS4 can continue to show the old menu when its previously stored `/data/hen/plugin_mono.prx` is still loaded. This native PRX **writes** `/data/hen/shellui_data/hen_settings.xml` when it starts, which can undo manual XML-only edits.
 
-The verified repair kit contains an **extracted, unmodified SELF module** from the exact DEXCore 13.52 payload; it does not contain any VSH/XMB overlay. It includes `plugin_mono.prx`, `hen_settings.xml`, `manifest.json`, and the offline FTP repair tool.
+The verified repair kit contains an **extracted SELF module with the checked DEXCore root-label modification** from the exact DEXCore 13.52 payload; it does not contain any VSH/XMB overlay. It includes `plugin_mono.prx`, `hen_settings.xml`, `manifest.json`, and the offline FTP repair tool.
 
 ## Usage
 
@@ -25,4 +25,4 @@ python repair-dexcore-plugin.py --ip YOUR_PS4_IP --restore BACKUP_FOLDER
 
 **Reboot fully**, then launch DEXCore from the default web host. The original HEN installer can overwrite this PRX on the next boot if the browser loads another HEN build with `upload_prx=1`, so avoid loading the legacy build except for recovery. If HEN says it is already installed, do a complete console restart before testing again.
 
-This plugin-replacement process is console-hardware unverified. Changes to `plugin_mono.prx` can disrupt the Settings page. Keep the original backups and recovery FTP access. It does **not** rename the top-level legacy Settings ID, which is baked into the Mono hook separately.
+This plugin-replacement process is console-hardware unverified. Changes to `plugin_mono.prx` can disrupt the Settings page. Keep the original backups and recovery FTP access. The visible top-level Settings link is now **DEXCore v1** as well. Its internal ID remains `hen_settings` for compatibility; internal identifiers are not user-visible.

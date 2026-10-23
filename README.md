@@ -12,4 +12,6 @@ The updated native menu is **★ DEXCore v1 → FTP Server / Payload Options →
 
 The verified DEXCore native menu candidate is now promoted to `loader/dexcore.bin` as the website's default payload. This is not an on-console ShellUI-plugin installer: reboot/reload HEN on PS4 after switching builds. Check the [DEXCore PS4 build artifacts](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml) and [Settings implementation notes](docs/shellui-menus.md). PS4 hardware validation remains necessary.
 
+If your PS4 still displays an old HNCY/HENACY entry, use the [verified on-console plugin repair kit](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-plugin-repair.yml). The previous installed `/data/hen/plugin_mono.prx` can retain and regenerate outdated Settings text. The kit backs up that PRX before replacement. Do not install without working recovery access.
+
 The discontinued VSH/XMB overlay is not being restored. If you previously installed a VSH test plugin, restore your console-specific `plugin_mono.prx` backup and reboot before testing DEXCore.
