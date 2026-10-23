@@ -8,6 +8,7 @@ window.startHENHost=function () {
   var firmware=window.HEN_DEVICE.firmware;
   var supported=firmware==="13.52", timer=null, deadline=0, autoEnabled=false, busy=false;
   var preferenceKey="hen-autoload-disabled";
+  var diagnostics=/(?:[?&])log=1(?:&|$)/.test(location.search||"");
   var files=[
     ["loader/"+build.payload[0],build.payload[1],build.payload[2]],
     ["loader/patches/1352.bin",632,"adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e"]
@@ -39,7 +40,7 @@ window.startHENHost=function () {
     statusText.textContent="Checking exploit files…";
     Promise.all(files.map(fileCheck)).then(function(){
       statusText.textContent="Loading exploit…";
-      window.location.assign("loader/jb.html"+build.query);
+      window.location.assign("loader/jb.html"+build.query+(diagnostics?(build.query?"&":"?")+"log=1":""));
     }).catch(function(error){
       busy=false;loadButton.disabled=!supported;autoButton.disabled=!supported;
       statusText.textContent=error.message+" Auto loading is stopped.";
