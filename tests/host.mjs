@@ -10,7 +10,7 @@ const testPassword='local-test-password';
 const testHash=createHash('sha256').update(testPassword).digest('hex');
 const lifetime=8*60*60*1000;
 const promoted=existsSync(new URL('loader/dexcore.bin',root));
-const expectedDefaultPayload=promoted?'loader/dexcore.bin?v=1-edb0fa619aa4':expectedDefaultPayload;
+const expectedDefaultPayload=promoted?'loader/dexcore.bin?v=1-edb0fa619aa4':'loader/henacy.bin?v=1-syslogo-ea1235b846b0';
 
 function environment(ua,{original=false,henacy=false,session=new Map(),preference=new Map(),corrupt=false,storageBlocked=false}={}){
   const nodes=new Map(),intervals=new Map(),navigation=[],requests=[],pending=[],modules=[];let now=0,next=0;
@@ -71,7 +71,7 @@ if(promoted){
   assert.equal(dexcore.length,500448);
   assert(dexcore.includes(Buffer.from('DEXCore v1')));
   assert(dexcore.includes(Buffer.from('FTP Server')));
-  assert(dexcore.includes(Buffer.from(' | DEXCore\\0')));
+  assert(dexcore.includes(Buffer.from(' | DEXCore\0')));
   assert.equal(createHash('sha256').update(dexcore).digest('hex'),'edb0fa619aa48de7858fdc1fb2bee30dd9ec6a367fdd28766707e1aac3e9bdae');
 }
 
