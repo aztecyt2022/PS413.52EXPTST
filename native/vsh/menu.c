@@ -1,18 +1,22 @@
 #include "menu.h"
 
 void vsh_defaults(VshConfig *c) {
-    *c = (VshConfig){.stats = 0, .side = 0, .theme = 0, .opacity = 90, .fahrenheit = 0};
+    *c = (VshConfig){.stats = 0, .side = 0, .theme = 3, .opacity = 90, .fahrenheit = 0};
 }
 bool vsh_config_valid(const VshConfig *c) {
-    return c->stats <= 1 && c->side <= 1 && c->theme <= 2 &&
+    return c->stats <= 1 && c->side <= 1 && c->theme <= 3 &&
            c->opacity >= 70 && c->opacity <= 100 && c->opacity % 5 == 0 && c->fahrenheit <= 1;
 }
 void vsh_init(VshMenu *m) {
     *m = (VshMenu){.enabled = true, .dirty = true, .owner = -1};
     vsh_defaults(&m->config);
+    /* Never assume a listening port is owned by HENACY: discovery and
+       start/stop must be supplied by a real PS4 service backend. */
+    for (unsigned i = 0; i < VSH_SERVICE_COUNT; ++i)
+        m->service_state[i] = VSH_SERVICE_UNAVAILABLE;
 }
 unsigned vsh_rows(unsigned page) {
-    static const uint8_t rows[] = {6, 5, 3, 6, 4};
+    static const uint8_t rows[] = {7, 5, 3, 4, 6, 4};
     return page < VSH_PAGES ? rows[page] : 0;
 }
 void vsh_home_lost(VshMenu *m) {
@@ -29,7 +33,7 @@ static void adjust(VshMenu *m, int direction) {
         if (row == 1) c->fahrenheit ^= 1;
         if (row == 2) c->side ^= 1;
     } else if (m->page == VSH_SETTINGS) {
-        if (row == 0) c->theme = (uint8_t)((c->theme + 3 + direction) % 3);
+        if (row == 0) c->theme = (uint8_t)((c->theme + 4 + direction) % 4);
         if (row == 1) {
             int value = c->opacity + direction * 5;
             if (value >= 70 && value <= 100) c->opacity = (uint8_t)value;
@@ -41,9 +45,15 @@ static void adjust(VshMenu *m, int direction) {
 static void enter(VshMenu *m) {
     unsigned row = m->selected[m->page];
     if (m->page == VSH_MAIN) {
-        if (row < 4) m->page = (uint8_t)(row + 1);
-        else if (row == 4) { m->enabled = false; m->open = false; m->action = VSH_DISABLE; }
+        if (row < 5) m->page = (uint8_t)(row + 1);
+        else if (row == 5) { m->enabled = false; m->open = false; m->action = VSH_DISABLE; }
         else m->open = false;
+    } else if (m->page == VSH_SERVICES) {
+        if (row < VSH_SERVICE_COUNT) {
+            m->requested_service = (uint8_t)row;
+            m->requested_enable = m->service_state[row] != VSH_SERVICE_ON;
+            m->action = VSH_SERVICE_TOGGLE;
+        } else m->page = VSH_MAIN;
     } else if (m->page == VSH_SETTINGS && row >= 3) {
         if (row == 3) m->action = VSH_SAVE;
         if (row == 4) { vsh_defaults(&m->config); m->action = VSH_RESET; }

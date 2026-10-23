@@ -1,6 +1,6 @@
-# HENACY VSH 0.1 — native PS4 test build
+# HENACY V1.2 — native PS4 development
 
-This is a new x86-64 PS4 ShellUI implementation using **Akari v1.2.2 by Jordy Nateur** as the menu baseline. Akari's PS3 PAF renderer, PowerPC binary, Cobra calls, ID spoofing and PS3 power controls are not used. No Akari source or assets are copied into this port.
+This is an in-progress x86-64 PS4 ShellUI implementation using **Akari v1.2.2 by Jordy Nateur** as the menu baseline. Akari's PS3 PAF renderer, PowerPC binary, Cobra calls, ID spoofing and PS3 power controls are not used. No Akari source or assets are copied into this port.
 
 **Target: PS4 firmware 13.52 with this repository's HENACY base. Physical PS4 runtime testing is still required.** A successful compile, Linux simulation or website deployment does not certify compatibility on a console. This test build is selectable; it does not replace the website's default payload.
 
@@ -10,7 +10,8 @@ Press **L3 + R3** together on the PS4 home screen. Release both after opening. U
 
 - **Console manager:** firmware, CPU temperature, SoC sensor, ShellUI update rate and UI canvas dimensions. Missing sensors say `unavailable`. The update counter measures ShellUI callbacks, not game FPS. CPU and SoC readings are sampled once per second; they are not two independent PS4 CPU/GPU sensors.
 - **Overlay:** statistics on/off, Celsius/Fahrenheit, left/right placement. It appears on the ShellUI home scene, not inside game processes.
-- **Settings:** Crimson, Ocean and Monochrome themes; opacity from 70–100%; position; save and reset. Both reading and writing use `/data/hen/henacy-vsh.cfg`.
+- **Network services:** FTP (2121), payload (9090) and kernel log (3232) status rows. **These are fail-closed until a separately verified PS4 service-control backend is installed**. Selecting a row currently displays an explicit unavailable message and does not falsely claim a server is running. Existing HEN plugin servers may be active independently; this native VSH test module cannot start/stop them yet.
+- **Settings:** Crimson, Ocean, Monochrome and VHS Tape themes; opacity from 70–100%; position; save and reset. VHS Tape is the new default, with subtle static scan lines rather than expensive per-frame animation. Both reading and writing use `/data/hen/henacy-vsh.cfg`.
 - **About:** Akari attribution and the PS4 SHARE screenshot shortcut.
 - **Disable until reboot:** removes widgets and releases input. The small native hooks stay resident and pass input through until ShellUI exits.
 
@@ -72,3 +73,7 @@ Host checks exercise native menu logic, the PS4 pad structure/filter, nested pad
 - [OSM-Made/PS4-Mono](https://github.com/OSM-Made/PS4-Mono): public Mono embedding research.
 - [Scene-Collective/ps4-hen-plugins](https://github.com/Scene-Collective/ps4-hen-plugins): existing HENACY plugin infrastructure and HDE64 decoder ABI.
 - [OpenOrbis v0.5.4](https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/releases/tag/v0.5.4): PS4 SPRX packaging and controller/kernel ABI.
+
+## V1.2 progress and known limitation
+
+The original 13.52 payload, the existing VSH PRX/test kit and PS4 firmware offsets have not been replaced with untested output. The V1.2 menu source is updated, but **the downloadable 0.1 binaries must not be called V1.2** until rebuilt with OpenOrbis and tested on a physical PS4. The FTP/payload/klog menu is an honest integration point, not a functional native service controller yet. The original HEN `plugin_server` typically runs FTP and klog in a separate daemon process; these cannot safely be toggled merely by changing a ShellUI boolean. A separate service backend with ownership-aware lifecycle, fault handling and console verification is required before enabling those actions.

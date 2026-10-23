@@ -39,7 +39,7 @@ static struct {
     void *width_get, *height_get, *append, *remove;
     void *name, *x, *y, *width, *height, *order, *background;
     void *text, *text_color, *font;
-    uint32_t root, panel, highlight, title, subtitle, rows[6], footer, stats;
+    uint32_t root, panel, highlight, title, subtitle, rows[7], lines[9], footer, stats;
     unsigned row_count;
     float scale, screen_width, screen_height;
 } ui;
@@ -118,7 +118,8 @@ static void remove_widget(uint32_t *h) {
 static void destroy_panel(void) {
     remove_widget(&ui.panel);
     release(&ui.title); release(&ui.subtitle); release(&ui.footer); release(&ui.highlight);
-    for (unsigned i = 0; i < 6; ++i) release(&ui.rows[i]);
+    for (unsigned i = 0; i < 7; ++i) release(&ui.rows[i]);
+    for (unsigned i = 0; i < 9; ++i) release(&ui.lines[i]);
     ui.row_count = 0;
 }
 static void destroy_ui(void) {
@@ -183,7 +184,7 @@ static void read_config(void) {
     int fields = fscanf(file, "HENACY_VSH_1\nstats=%u\nside=%u\ntheme=%u\nopacity=%u\nfahrenheit=%u\n",
                         &stats, &side, &theme, &opacity, &units);
     int extra = fgetc(file); fclose(file);
-    if (fields != 5 || extra != EOF || stats > 1 || side > 1 || theme > 2 || opacity > 100 || units > 1) {
+    if (fields != 5 || extra != EOF || stats > 1 || side > 1 || theme > 3 || opacity > 100 || units > 1) {
         log_line("Configuration rejected; using defaults."); return;
     }
     VshConfig c = {(uint8_t)stats, (uint8_t)side, (uint8_t)theme, (uint8_t)opacity, (uint8_t)units};
@@ -322,8 +323,8 @@ static void temperature(char *out, size_t size, int value, bool fahrenheit) {
     else snprintf(out, size, "%d %s", fahrenheit ? value * 9 / 5 + 32 : value, fahrenheit ? "F" : "C");
 }
 static void row_text(const VshMenu *m, unsigned row, char *text, size_t capacity) {
-    static const char *main[] = {"Console manager  >", "Overlay  >", "Settings  >", "About  >", "Disable until reboot", "Close menu"};
-    static const char *themes[] = {"Crimson", "Ocean", "Monochrome"};
+    static const char *main[] = {"Console manager  >", "Overlay  >", "Network services  >", "Settings  >", "About  >", "Disable until reboot", "Close menu"};
+    static const char *themes[] = {"Crimson", "Ocean", "Monochrome", "VHS Tape"};
     char c[32], s[32]; temperature(c, sizeof(c), cpu, m->config.fahrenheit); temperature(s, sizeof(s), soc, m->config.fahrenheit);
     text[0] = 0;
     if (m->page == VSH_MAIN) snprintf(text, capacity, "%s", main[row]);
@@ -339,6 +340,14 @@ static void row_text(const VshMenu *m, unsigned row, char *text, size_t capacity
         if (row == 1) snprintf(text, capacity, "Temperature unit: %s", m->config.fahrenheit ? "Fahrenheit" : "Celsius");
         if (row == 2) snprintf(text, capacity, "Position: %s", m->config.side ? "Right" : "Left");
     }
+    if (m->page == VSH_SERVICES) {
+        static const char *names[] = {"FTP server (2121)", "Payload server (9090)", "Kernel log (3232)"};
+        static const char *states[] = {"Unavailable", "Stopped", "Running", "Error"};
+        if (row < VSH_SERVICE_COUNT)
+            snprintf(text, capacity, "%s: %s", names[row],
+                states[m->service_state[row] <= VSH_SERVICE_ERROR ? m->service_state[row] : VSH_SERVICE_ERROR]);
+        else snprintf(text, capacity, "Back to main menu");
+    }
     if (m->page == VSH_SETTINGS) {
         if (row == 0) snprintf(text, capacity, "Theme: %s", themes[m->config.theme]);
         if (row == 1) snprintf(text, capacity, "Panel opacity: %u%%", m->config.opacity);
@@ -348,21 +357,24 @@ static void row_text(const VshMenu *m, unsigned row, char *text, size_t capacity
         if (row == 5) snprintf(text, capacity, "Back to main menu");
     }
     if (m->page == VSH_ABOUT) {
-        if (row == 0) snprintf(text, capacity, "HENACY VSH 0.1 - PS4 test build");
+        if (row == 0) snprintf(text, capacity, "HENACY V1.2 - PS4 test build");
         if (row == 1) snprintf(text, capacity, "Baseline: Akari v1.2.2");
         if (row == 2) snprintf(text, capacity, "Akari author: Jordy Nateur");
         if (row == 3) snprintf(text, capacity, "PS4 screenshots: use SHARE");
     }
 }
 static void render_panel(const VshMenu *m, bool *ok) {
-    static const char *titles[] = {"Main menu", "Console manager", "Overlay", "Settings", "About"};
-    static const float themes[][3] = {{0.78f, 0.06f, 0.14f}, {0.03f, 0.32f, 0.72f}, {0.35f, 0.35f, 0.38f}};
+    static const char *titles[] = {"VHS / XMB", "Console manager", "Overlay", "Network services", "Settings", "About"};
+    static const float themes[][3] = {{0.78f, 0.06f, 0.14f}, {0.03f, 0.32f, 0.72f}, {0.35f, 0.35f, 0.38f}, {0.75f, 0.1f, 0.12f}};
     if (!m->open) { destroy_panel(); return; }
     unsigned rows = vsh_rows(m->page);
     if (rows != ui.row_count) destroy_panel();
     if (!ui.panel) {
         ui.panel = make_widget(false, "henacy_vsh_panel", ui.root, ok);
         int order = 1; set(ui.order, object(ui.panel), &order, ok);
+        /* Nine fixed scan lines evoke analogue tape without animation or update-loop churn. */
+        for (unsigned i = 0; i < 9; ++i)
+            ui.lines[i] = make_widget(false, "henacy_vhs_scanline", ui.panel, ok);
         ui.highlight = make_widget(false, "henacy_vsh_selection", ui.panel, ok);
         ui.title = make_widget(true, "henacy_vsh_title", ui.panel, ok);
         ui.subtitle = make_widget(true, "henacy_vsh_subtitle", ui.panel, ok);
@@ -374,15 +386,20 @@ static void render_panel(const VshMenu *m, bool *ok) {
     float x = m->config.side ? ui.screen_width / ui.scale - 568 : 48;
     rect(ui.panel, x, 120, 520, 570, ok);
     color(ui.panel, ui.background, 0.025f, 0.025f, 0.04f, m->config.opacity / 100.0f, ok);
+    for (unsigned i = 0; i < 9; ++i) {
+        rect(ui.lines[i], 12, 35 + i * 49, 496, 1, ok);
+        color(ui.lines[i], ui.background, 0.85f, 0.65f, 0.66f,
+              m->config.theme == 3 ? 0.13f : 0.035f, ok);
+    }
     const float *t = themes[m->config.theme];
-    rect(ui.highlight, 12, 110 + m->selected[m->page] * 54, 496, 50, ok);
+    rect(ui.highlight, 12, 108 + m->selected[m->page] * 46, 496, 42, ok);
     color(ui.highlight, ui.background, t[0], t[1], t[2], 0.95f, ok);
-    rect(ui.title, 24, 20, 480, 36, ok); set_text(ui.title, "HENACY v1 | VSH", ok);
+    rect(ui.title, 24, 20, 480, 36, ok); set_text(ui.title, "HENACY V1.2  //  VHS", ok);
     color(ui.title, ui.text_color, 1, 0.45f, 0.48f, 1, ok);
     rect(ui.subtitle, 24, 62, 480, 36, ok); set_text(ui.subtitle, titles[m->page], ok);
     for (unsigned i = 0; i < rows; ++i) {
         char text[128]; row_text(m, i, text, sizeof(text));
-        rect(ui.rows[i], 24, 120 + i * 54, 480, 38, ok); set_text(ui.rows[i], text, ok);
+        rect(ui.rows[i], 24, 114 + i * 46, 480, 34, ok); set_text(ui.rows[i], text, ok);
     }
     char footer[256];
     snprintf(footer, sizeof(footer), "D-pad: move/change | Cross: select\nCircle: back | L3 + R3: close\n%s", status);
@@ -396,7 +413,7 @@ static void render_stats(const VshMenu *m, bool *ok) {
     }
     char c[32], s[32], text[160];
     temperature(c, sizeof(c), cpu, m->config.fahrenheit); temperature(s, sizeof(s), soc, m->config.fahrenheit);
-    snprintf(text, sizeof(text), "HENACY v1 | CPU %s | SoC %s\nShellUI %u updates/s | L3 + R3: menu", c, s, update_rate);
+    snprintf(text, sizeof(text), "HENACY V1.2 | CPU %s | SoC %s\nShellUI %u updates/s | L3 + R3: menu", c, s, update_rate);
     float x = m->config.side ? ui.screen_width / ui.scale - 760 : 48;
     rect(ui.stats, x, 24, 720, 82, ok); set_text(ui.stats, text, ok);
 }
@@ -421,6 +438,15 @@ static void update(void *application) {
         remove_widget(&probe);
         if (!ok) { failure("PUI widget creation failed; input remains untouched."); return; }
         atomic_store(&home_ready, true);
+    }
+    if (snapshot.action == VSH_SERVICE_TOGGLE) {
+        /* No unsafe no-op: never mark a daemon "Running" without a PS4
+           backend confirming its state. The original HEN plugin_server runs
+           in another process; this ShellUI PRX cannot control it directly. */
+        snprintf(status, sizeof(status),
+                 "Service control unavailable: native backend is not installed.");
+        log_line("Network service request refused: no verified PS4 service backend.");
+        lock(); menu.dirty = true; unlock();
     }
     if (snapshot.action == VSH_SAVE || snapshot.action == VSH_RESET) {
         snprintf(status, sizeof(status), "%s", save_config(&snapshot.config) ? "Settings saved." : "Could not save settings. Changes last until reboot.");

@@ -81,7 +81,7 @@ int main(void) {
     vsh_init(&menu); read_config(); assert(menu.config.theme == 2 && menu.config.opacity == 95);
     FILE *f = fopen(config_path, "w"); assert(f);
     fputs("HENACY_VSH_1\nstats=0\nside=0\ntheme=256\nopacity=95\nfahrenheit=0\n", f); fclose(f);
-    vsh_init(&menu); read_config(); assert(menu.config.theme == 0 && menu.config.opacity == 90);
+    vsh_init(&menu); read_config(); assert(menu.config.theme == 3 && menu.config.opacity == 90);
     menu.config.opacity = 69; assert(!save_config(&menu.config));
     remove(config_path); remove(log_path); assert(rmdir(directory) == 0);
     puts("PASS: unsupported firmware/API fail without hooks; real PS4 pad layout filtering, nested reads, disconnect handling and config round-trip/rejection.");
