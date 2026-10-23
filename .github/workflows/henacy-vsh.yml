@@ -1,0 +1,34 @@
+name: HENACY VSH host regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'native/vsh/**'
+      - 'tests/**'
+      - 'scripts/test-vsh.py'
+      - 'scripts/test-system-info.mjs'
+      - 'builds/vsh/**'
+      - '.github/workflows/henacy-vsh.yml'
+  pull_request:
+    paths:
+      - 'native/vsh/**'
+      - 'tests/**'
+      - 'scripts/test-vsh.py'
+      - 'builds/vsh/**'
+      - '.github/workflows/henacy-vsh.yml'
+jobs:
+  native-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Native menu, pad filter, bootstrap and package regression
+        run: npm run test:vsh
+      - name: Existing native System Information regression
+        run: npm run test:native
+      - name: Host frontend regression
+        run: npm test
+      - name: ShellUI menu preview regression
+        run: npm run test:shellui

@@ -19,7 +19,7 @@ int main(void) {
     assert(input(&m, VSH_CHORD)); assert(m.open);
     for (unsigned i = 0; i < 200; ++i) input(&m, VSH_CHORD);
     assert(m.open); input(&m, 0);
-    tap(&m, VSH_UP); assert(m.selected[VSH_MAIN] == 5);
+    tap(&m, VSH_UP); assert(m.selected[VSH_MAIN] == 6);
     tap(&m, VSH_DOWN); assert(m.selected[VSH_MAIN] == 0);
     tap(&m, VSH_CROSS); assert(m.page == VSH_CONSOLE);
     tap(&m, VSH_CIRCLE); assert(m.page == VSH_MAIN && m.open);
@@ -35,6 +35,17 @@ int main(void) {
     tap(&m, VSH_CROSS);
     assert(m.action == VSH_SERVICE_TOGGLE && m.requested_service == VSH_FTP && m.requested_enable);
     assert(m.service_state[VSH_FTP] == VSH_SERVICE_UNAVAILABLE); /* No fake activation. */
+    m.action = VSH_NONE;
+    tap(&m, VSH_DOWN); tap(&m, VSH_CROSS);
+    assert(m.requested_service == VSH_PAYLOAD && m.requested_enable);
+    assert(m.service_state[VSH_PAYLOAD] == VSH_SERVICE_UNAVAILABLE);
+    m.action = VSH_NONE;
+    tap(&m, VSH_DOWN); tap(&m, VSH_CROSS);
+    assert(m.requested_service == VSH_KLOG && m.requested_enable);
+    assert(m.service_state[VSH_KLOG] == VSH_SERVICE_UNAVAILABLE);
+    m.action = VSH_NONE;
+    m.service_state[VSH_KLOG] = VSH_SERVICE_ON; /* A backend can signal reality. */
+    tap(&m, VSH_CROSS); assert(!m.requested_enable);
     m.action = VSH_NONE;
     tap(&m, VSH_CIRCLE); tap(&m, VSH_DOWN); tap(&m, VSH_CROSS);
     assert(m.page == VSH_SETTINGS);
