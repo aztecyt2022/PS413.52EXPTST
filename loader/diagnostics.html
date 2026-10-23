@@ -53,7 +53,7 @@ feature("JavaScript module scripts",function(){return "noModule" in document.cre
 feature("Promise / Map / Symbol / URLSearchParams",function(){return typeof Promise==="function"&&typeof Map==="function"&&typeof Symbol==="function"&&typeof URLSearchParams==="function";},"A required browser API is unavailable");
 feature("Optional-chaining syntax",function(){return new Function("return ({a:1})?.a")()===1;},"The exploit's JavaScript cannot be parsed");
 feature("BigInt syntax and runtime",function(){return typeof BigInt==="function"&&new Function("return 1n+1n")()===BigInt(2);},"The WebKit primitive requires BigInt support");
-feature("ArrayBuffer XHR",function(){var x=new XMLHttpRequest();x.responseType="arraybuffer";return x.responseType==="arraybuffer";},"Binary downloads cannot be checked");
+feature("ArrayBuffer XHR",function(){var x=new XMLHttpRequest();x.open("GET","jb.js",true);x.responseType="arraybuffer";return x.responseType==="arraybuffer";},"Binary downloads cannot be checked");
 feature("SHA-256 verification code",function(){return typeof window.HEN_SHA256==="function";},"sha256.js did not load");
 function resource(name,path,size,hash){
  pending++;
