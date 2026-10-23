@@ -40,8 +40,6 @@ The generator reads `loader/henacy.bin` and the editable menu XML. It checks the
 
 The preview is **not loaded by the GitHub Pages website** and cannot be assumed to work until tested on a PS4 running the intended firmware. Do not replace an installed plugin or firmware file blindly; keep the original payload and a way to restart ShellUI if testing causes UI instability.
 
-## Real XMB popup / overlaid panel (next native stage)
+## Scope
 
-This edit creates nested **Settings** pages, not a floating overlay over the PS4 home screen. A true system-wide XMB-style popup needs native ShellUI work: a verified UI2 root widget, a main-thread render/update hook, controller event handling, focus and dismissal logic, and a reliable cleanup path. No arbitrary Sony firmware addresses, store tile replacement, or global input interception have been added here.
-
-The existing source `scripts/henacy-system-info.c` supplies one separate native Mono/PUI integration point, but it is **not itself a popup renderer**. Before enabling the floating popup, test the specific rendering methods and controller key mapping on firmware 13.52.
+This document describes the original HENACY Settings menu and offline XML preview only. The experimental VSH/XMB overlay has been retired; no floating overlay code, controller hook, or VSH test payload is part of the active host.

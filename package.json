@@ -6,7 +6,6 @@
     "build": "node scripts/build.mjs",
     "test": "node tests/host.mjs",
     "test:native": "node scripts/test-system-info.mjs",
-    "test:shellui": "python3 tests/test-shellui-preview.py",
-    "test:vsh": "python3 scripts/test-vsh.py && python3 tests/test-vsh-package.py"
+    "test:shellui": "python3 tests/test-shellui-preview.py"
   }
 }

@@ -1,0 +1,26 @@
+name: HENACY host and native Settings regression
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify HENACY and original HEN payload selection
+        run: npm test
+      - name: Verify native System Information
+        run: npm run test:native
+      - name: Verify native Settings XML preview
+        run: npm run test:shellui
+      - name: Build static PS4 web host
+        run: npm run build

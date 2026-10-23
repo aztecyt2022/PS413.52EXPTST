@@ -10,7 +10,7 @@ const testPassword='local-test-password';
 const testHash=createHash('sha256').update(testPassword).digest('hex');
 const lifetime=8*60*60*1000;
 
-function environment(ua,{original=false,henacy=false,vsh=false,session=new Map(),preference=new Map(),corrupt=false,storageBlocked=false}={}){
+function environment(ua,{original=false,henacy=false,session=new Map(),preference=new Map(),corrupt=false,storageBlocked=false}={}){
   const nodes=new Map(),intervals=new Map(),navigation=[],requests=[],pending=[],modules=[];let now=0,next=0;
   function node(id){if(!nodes.has(id))nodes.set(id,{textContent:'',value:'',hidden:id==='hostPanel',disabled:id==='loadExploit'||id==='toggleAuto',handlers:{},focus(){},addEventListener(type,fn){this.handlers[type]=fn;},click(){if(!this.disabled)this.handlers.click?.();},submit(){this.handlers.submit?.({preventDefault(){}});}});return nodes.get(id);}
   const storage=map=>({getItem(k){if(storageBlocked)throw Error('storage');return map.get(k)||null;},setItem(k,v){if(storageBlocked)throw Error('storage');map.set(k,v);},removeItem(k){map.delete(k);}});
@@ -19,7 +19,7 @@ function environment(ua,{original=false,henacy=false,vsh=false,session=new Map()
     open(_method,path){this.path=path;requests.push(path);}
     send(){pending.push(Promise.resolve().then(()=>{this.status=200;const data=bytes(this.path);if(corrupt&&this.path.split('?')[0].endsWith('.bin')&&!this.path.includes('patches/'))data[data.length-1]^=1;this.response=data.buffer;this.onload();}));}
   }
-  const context=vm.createContext({HEN_CONFIG:{passwordHash:testHash},navigator:{userAgent:ua},document:{getElementById:node,createElement:()=>({}),head:{appendChild:element=>modules.push(element)}},sessionStorage:storage(session),localStorage:storage(preference),location:{search:henacy?'?henacy=1':original?'?original=1':vsh?'?vsh=1':'',assign:path=>navigation.push(path),replace:path=>navigation.push(path)},XMLHttpRequest:XHR,Date:FakeDate,Uint8Array,ArrayBuffer,DataView,Int32Array,Promise,unescape,encodeURIComponent,setInterval:fn=>{intervals.set(++next,fn);return next;},clearInterval:id=>intervals.delete(id)});
+  const context=vm.createContext({HEN_CONFIG:{passwordHash:testHash},navigator:{userAgent:ua},document:{getElementById:node,createElement:()=>({}),head:{appendChild:element=>modules.push(element)}},sessionStorage:storage(session),localStorage:storage(preference),location:{search:henacy?'?henacy=1':original?'?original=1':'',assign:path=>navigation.push(path),replace:path=>navigation.push(path)},XMLHttpRequest:XHR,Date:FakeDate,Uint8Array,ArrayBuffer,DataView,Int32Array,Promise,unescape,encodeURIComponent,setInterval:fn=>{intervals.set(++next,fn);return next;},clearInterval:id=>intervals.delete(id)});
   context.window=context;
   for(const script of ['sha256.js','auth.js','device.js','payloads.js','app.js','entry.js'])vm.runInContext(read(script),context,{filename:script});
   return {context,node,intervals,navigation,requests,modules,session,login(password=testPassword){node('password').value=password;node('loginForm').submit();},async settle(){await Promise.all(pending);await new Promise(resolve=>setImmediate(resolve));},async advance(ms){now+=ms;for(const fn of [...intervals.values()])fn();await this.settle();},loadEntry(){vm.runInContext(read('loader/entry.js'),context);}};
@@ -42,9 +42,9 @@ const blockedStorage=environment(ps4('13.52'),{storageBlocked:true});blockedStor
 console.log('PASS: remembered auto-load preference, manual launch, session restoration, logout, and storage failure feedback.');
 
 for(const ua of ['Desktop browser',ps4('13.50'),ps4('14.00'),ps4('13.52.1'),ps4('13.520'),'Mozilla/5.0 (PlayStation 5 13.52)']){
-  for(const option of [{},{henacy:true},{original:true},{vsh:true}]){const unsupported=environment(ua,option);unsupported.login();assert.equal(unsupported.node('loadExploit').disabled,true);assert.equal(unsupported.node('toggleAuto').disabled,true);await unsupported.advance(60000);assert.equal(unsupported.requests.length,0);unsupported.loadEntry();assert.equal(unsupported.modules.length,0);}
+  for(const option of [{},{henacy:true},{original:true}]){const unsupported=environment(ua,option);unsupported.login();assert.equal(unsupported.node('loadExploit').disabled,true);assert.equal(unsupported.node('toggleAuto').disabled,true);await unsupported.advance(60000);assert.equal(unsupported.requests.length,0);unsupported.loadEntry();assert.equal(unsupported.modules.length,0);}
 }
-for(const option of [{},{original:true},{henacy:true},{vsh:true}]){const corrupt=environment(ps4('13.52'),{...option,corrupt:true});corrupt.login();corrupt.node('loadExploit').click();await corrupt.settle();assert.equal(corrupt.navigation.length,0);assert.match(corrupt.node('status').textContent,/verification failed/);assert.equal(corrupt.intervals.size,0);}
+for(const option of [{},{original:true},{henacy:true}]){const corrupt=environment(ps4('13.52'),{...option,corrupt:true});corrupt.login();corrupt.node('loadExploit').click();await corrupt.settle();assert.equal(corrupt.navigation.length,0);assert.match(corrupt.node('status').textContent,/verification failed/);assert.equal(corrupt.intervals.size,0);}
 const original=environment(ps4('13.52'),{original:true});original.login();
 assert.equal(original.node('hostTitle').textContent,'PS4 HEN 2.2.0');
 assert.equal(original.node('switchBuild').textContent,'Use HENACY v1');
@@ -77,21 +77,17 @@ assert.equal(guestHenacy.node('loginTitle').textContent,'HENACY v1');
 assert.deepEqual(guestHenacy.navigation,['../index.html']);
 console.log('PASS: exact PS4 13.52 guard; HENACY is the default; original HEN selection and existing HENACY links load matching payloads; corrupt payloads stop all launch paths.');
 
-const vsh=environment(ps4('13.52'),{vsh:true});vsh.login();
-assert.equal(vsh.context.HEN_BUILD.vsh,true);assert.equal(vsh.intervals.size,0);
-assert.equal(vsh.node('hostTitle').textContent,'HENACY v1 — VSH test');
-assert.match(vsh.node('status').textContent,/Install both native modules/);
-await vsh.advance(60000);assert.equal(vsh.requests.length,0);
-assert.equal(vsh.node('diagnostics').href,'loader/diagnostics.html?vsh=1');
-vsh.node('loadExploit').click();await vsh.settle();
-assert.deepEqual(vsh.navigation,['loader/jb.html?vsh=1&v=henacy-v1-diag-3']);
-assert.equal(vsh.requests[0],'loader/../builds/vsh/henacy-vsh.bin?v=0.1-fabe656438e3');
-const guestVsh=environment(ps4('13.52'),{vsh:true});guestVsh.loadEntry();
-assert.deepEqual(guestVsh.navigation,['../index.html?vsh=1']);
-for(const [search,expected] of [['?vsh=1','HENACY v1 — VSH test'],['?vsh=10','HENACY v1'],['?original=1&vsh=1','PS4 HEN 2.2.0'],['?henacy=1&vsh=1','HENACY v1']]){
-  const c=vm.createContext({location:{search}});c.window=c;vm.runInContext(read('payloads.js'),c);assert.equal(c.HEN_BUILD.label,expected);
+// Retired VSH links must never select a removed binary.
+for(const [search,expected] of [['?vsh=1','HENACY v1'],['?vsh=10','HENACY v1'],
+                                  ['?original=1&vsh=1','PS4 HEN 2.2.0'],
+                                  ['?henacy=1&vsh=1','HENACY v1']]){
+  const c=vm.createContext({location:{search}});c.window=c;
+  vm.runInContext(read('payloads.js'),c);
+  assert.equal(c.HEN_BUILD.label,expected);
+  assert(!c.HEN_BUILD.payload[0].includes('builds/vsh'));
+  assert.equal(c.HEN_BUILD.query,search.includes('original=1')&&!search.includes('henacy=1')?'?original=1':'');
 }
-console.log('PASS: VSH is explicit and manual by default; its payload passes integrity checks and selection survives login, loader and diagnostics links.');
+console.log('PASS: retired VSH query falls back to standard HENACY / explicitly selected original HEN.');
 
 const guestLoader=environment(ps4('13.52'));guestLoader.loadEntry();assert.deepEqual(guestLoader.navigation,['../index.html']);assert.equal(guestLoader.modules.length,0);
 const allowedLoader=environment(ps4('13.52'));allowedLoader.login();allowedLoader.loadEntry();assert.equal(allowedLoader.modules.length,1);assert.match(allowedLoader.modules[0].src,/^jb.js\?/);
