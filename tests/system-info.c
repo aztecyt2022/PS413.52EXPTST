@@ -191,8 +191,8 @@ int main(int argc, char **argv) {
     const bool candidate = argc > 1;
     const char *embedded_brand = candidate ? "13.52 | DEXCore" : "13.52 | HENACY v1";
     const char *embedded_padded = candidate ?
-        "\\xe2\\x80\\x83\\xe2\\x80\\x83\\xe2\\x80\\x83" "13.52 | DEXCore" :
-        "\\xe2\\x80\\x83\\xe2\\x80\\x83\\xe2\\x80\\x83" "13.52 | HENACY v1";
+        "\xe2\x80\x83\xe2\x80\x83\xe2\x80\x83" "13.52 | DEXCore" :
+        "\xe2\x80\x83\xe2\x80\x83\xe2\x80\x83" "13.52 | HENACY v1";
     load_plugin(candidate ? argv[1] : "loader/henacy.bin");
     native_setter = mmap(NULL, 4096, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     assert(native_setter != MAP_FAILED);
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
     expect(display, embedded_brand);
     Label actual_label = {0}; text(&actual_label,display);
     assert(actual_label.image && actual_label.image->width == 64);
-    expect(actual_label.text,"\xe2\x80\x83\xe2\x80\x83\xe2\x80\x83" "13.52 | HENACY v1");
+    expect(actual_label.text, embedded_padded);
     text(&actual_label,ordinary); assert(!actual_label.image);
     puts("PASS: the embedded payload code executes at a relocated base, resolves existing Mono calls, displays the expected brand with the existing HNCY icon, and releases the image when the label changes.");
     return 0;
