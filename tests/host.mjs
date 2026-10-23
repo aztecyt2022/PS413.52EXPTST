@@ -71,7 +71,7 @@ if(promoted){
   assert.equal(dexcore.length,500448);
   assert(dexcore.includes(Buffer.from('DEXCore v1')));
   assert(dexcore.includes(Buffer.from('FTP Server')));
-  assert(dexcore.includes(Buffer.from(' | DEXCore\\0')));
+  assert(dexcore.includes(Buffer.from(' | DEXCore\0')));
   if (dexcore.includes(Buffer.from('title="DEXCore v1" file="hen_settings.xml"'))) {
     assert(!dexcore.includes(Buffer.from('title="★ HNCY" file="hen_settings.xml"')));
   }
