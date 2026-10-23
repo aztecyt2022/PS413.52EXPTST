@@ -4,7 +4,7 @@ This is a native PS4 Settings XML menu; **not** a VSH/XMB overlay.
 
 ```
 PS4 Settings
-  ★ HNCY (legacy PS4 native Settings entry)
+  DEXCore v1 (native PS4 Settings root link)
     ★ DEXCore v1
       ★ FTP Server / Payload Options
         FTP Server + Plugins (Restart Required)
@@ -15,7 +15,7 @@ PS4 Settings
       System
 ```
 
-The existing root entry, filenames, internal `hncy_*` IDs and icon paths remain for compatibility with the compiled PS4 Mono hook.
+The native root link text is rebranded to DEXCore v1 using an equal-length, SHA-pinned modification of its built-in XML string. Internal `hen_settings`/`hncy_*` IDs and original file paths remain for compatibility with the PS4 Mono hook.
 
 **FTP semantics:** The new visible FTP setting is the existing HEN `enable_plugins` toggle, kept on the `payload_options` page where the upstream ShellUI handler persists it. Enabling plugins allows the bundled HEN `plugin_server` to start FTP on port **2121** and kernel logging on **3232** after HEN is reloaded. It is not a standalone FTP-only toggle, does not report listening state, and is unsuitable for untrusted networks. The server must be installed and load successfully.
 

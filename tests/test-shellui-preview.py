@@ -38,7 +38,13 @@ class NativeShellUIMenuTests(unittest.TestCase):
             builder.build(base_path, ROOT / "shellui" / "hen_settings.xml", preview)
             new = preview.read_bytes()
         self.assertEqual(len(original), len(new))
-        self.assertEqual(original[:builder.XML_START], new[:builder.XML_START])
+        at = original.find(builder.TOP_LINK_OLD, 0x29C80, builder.XML_START)
+        self.assertGreater(at, 0x29C80)
+        self.assertEqual(new[at:at+len(builder.TOP_LINK_OLD)], builder.TOP_LINK_NEW)
+        self.assertEqual(original[:at], new[:at])
+        self.assertEqual(original[at+len(builder.TOP_LINK_OLD):builder.XML_START],
+                         new[at+len(builder.TOP_LINK_OLD):builder.XML_START])
+        self.assertNotIn(builder.TOP_LINK_OLD, new[0x29C80:builder.XML_START])
         end = builder.XML_START + builder.XML_SLOT
         old_suffix = builder.OLD_SUFFIX
         offset = original.find(old_suffix, *builder.BRAND_REGION)

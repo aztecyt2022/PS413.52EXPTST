@@ -10,7 +10,7 @@ const testPassword='local-test-password';
 const testHash=createHash('sha256').update(testPassword).digest('hex');
 const lifetime=8*60*60*1000;
 const promoted=existsSync(new URL('loader/dexcore.bin',root));
-const expectedDefaultPayload=promoted?'loader/dexcore.bin?v=1-edb0fa619aa4':'loader/henacy.bin?v=1-syslogo-ea1235b846b0';
+const expectedDefaultPayload=promoted?'loader/'+read('payloads.js').match(/\["(dexcore\.bin\?v=[^"]+)",500448/)[1]:'loader/henacy.bin?v=1-syslogo-ea1235b846b0';
 
 function environment(ua,{original=false,henacy=false,session=new Map(),preference=new Map(),corrupt=false,storageBlocked=false}={}){
   const nodes=new Map(),intervals=new Map(),navigation=[],requests=[],pending=[],modules=[];let now=0,next=0;
@@ -66,13 +66,16 @@ assert.equal(henacy.requests[0],expectedDefaultPayload);
 assert.equal(gated.node('switchBuild').href,'?original=1');
 assert.equal(gated.requests[0],expectedDefaultPayload);
 if(promoted){
-  assert.equal(gated.context.HEN_BUILD.payload[2],'edb0fa619aa48de7858fdc1fb2bee30dd9ec6a367fdd28766707e1aac3e9bdae');
+  assert.equal(gated.context.HEN_BUILD.payload[2],createHash('sha256').update(bytes('loader/dexcore.bin')).digest('hex'));
   const dexcore=Buffer.from(bytes('loader/dexcore.bin'));
   assert.equal(dexcore.length,500448);
   assert(dexcore.includes(Buffer.from('DEXCore v1')));
   assert(dexcore.includes(Buffer.from('FTP Server')));
-  assert(dexcore.includes(Buffer.from(' | DEXCore\0')));
-  assert.equal(createHash('sha256').update(dexcore).digest('hex'),'edb0fa619aa48de7858fdc1fb2bee30dd9ec6a367fdd28766707e1aac3e9bdae');
+  assert(dexcore.includes(Buffer.from(' | DEXCore\\0')));
+  if (dexcore.includes(Buffer.from('title="DEXCore v1" file="hen_settings.xml"'))) {
+    assert(!dexcore.includes(Buffer.from('title="★ HNCY" file="hen_settings.xml"')));
+  }
+  assert.equal(createHash('sha256').update(dexcore).digest('hex'),gated.context.HEN_BUILD.payload[2]);
 }
 
 assert.equal(gated.node('hostTitle').textContent,'DEXCore v1');

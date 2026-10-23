@@ -19,6 +19,15 @@ XML_SLOT = 5069
 OLD_SUFFIX = b" | HENACY v1\x00"
 NEW_SUFFIX = b" | DEXCore\x00"
 BRAND_REGION = (0x39A6D, 0x3C000)
+
+# The outer PS4 Settings link is a separately compiled XML string in the
+# plugin_mono PRX. An equal-byte-length swap avoids shifting native rodata.
+TOP_LINK_OLD = ('\t\t<link id="hen_settings" title="★ HNCY" file="hen_settings.xml" '
+                'icon="file:///data/hen/shellui_data/icons/hen_settings_icon.png" />\r\n').encode("utf-8")
+TOP_LINK_NEW = ('<link id="hen_settings" title="DEXCore v1" file="hen_settings.xml" '
+                'icon="file:///data/hen/shellui_data/icons/hen_settings_icon.png" />\r\n').encode("utf-8")
+assert len(TOP_LINK_NEW) == len(TOP_LINK_OLD)
+
 CONFIG_IDS = {"exploit_fixes", "mmap_patches", "block_updates", "disable_aslr",
               "nobd_patches", "target_id", "skip_patches", "upload_prx", "enable_plugins"}
 ACTION_IDS = {"id_plugin_manager", "id_game_package_installer_hdd",
@@ -94,8 +103,17 @@ def build(base_path, menu_path, output_path):
         raise ValueError("Replacement text does not fit verified rodata allocation")
     patched_suffix = NEW_SUFFIX.ljust(len(OLD_SUFFIX), b"\x00")
     candidate[offset:offset + len(OLD_SUFFIX)] = patched_suffix
+    # The outer PS4 Settings list is not the embedded <setting_list> title.
+    # Its precompiled <link> text must be updated separately.
+    outer_at = base.find(TOP_LINK_OLD, 0x29C80, XML_START)
+    if outer_at < 0 or base.find(TOP_LINK_OLD, outer_at + 1, XML_START) >= 0:
+        raise ValueError("Unexpected outer HNCY Settings link (missing or duplicate)")
+    if not 0x29C80 < outer_at < XML_START - len(TOP_LINK_OLD):
+        raise ValueError("Outer Settings link is outside the plugin PRX")
+    candidate[outer_at:outer_at + len(TOP_LINK_OLD)] = TOP_LINK_NEW
     # Preserve every byte outside the two approved, non-overlapping ranges.
-    assert candidate[:XML_START] == base[:XML_START]
+    assert candidate[:outer_at] == base[:outer_at]
+    assert candidate[outer_at + len(TOP_LINK_OLD):XML_START] == base[outer_at + len(TOP_LINK_OLD):XML_START]
     assert candidate[end:offset] == base[end:offset]
     assert candidate[offset + len(OLD_SUFFIX):] == base[offset + len(OLD_SUFFIX):]
     assert len(candidate) == len(base)
@@ -106,6 +124,7 @@ def build(base_path, menu_path, output_path):
     print("XML resource bytes:", len(data), "/", XML_SLOT)
     print("Original web payload, all firmware/kernel bytes, and icon unchanged.")
     print("Native version suffix patched at:", hex(offset))
+    print("Outer PS4 Settings title patched at:", hex(outer_at))
     print("PS4 13.52 hardware test: NOT YET VERIFIED")
 
 
