@@ -45,7 +45,7 @@ class NativeShellUIMenuTests(unittest.TestCase):
         self.assertGreater(offset, end)
         self.assertEqual(original[end:offset], new[end:offset])
         self.assertEqual(new[offset:offset + len(old_suffix)],
-                         builder.NEW_SUFFIX.ljust(len(old_suffix), b"\\x00"))
+                         builder.NEW_SUFFIX.ljust(len(old_suffix), b"\x00"))
         self.assertEqual(original[offset+len(old_suffix):], new[offset+len(old_suffix):])
         self.assertIn(b'DEXCore v1', new[builder.XML_START:end])
         self.assertIn(b'FTP Server', new[builder.XML_START:end])

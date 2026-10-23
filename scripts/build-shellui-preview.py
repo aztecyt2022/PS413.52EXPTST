@@ -16,8 +16,8 @@ XML_START = 0x386A0
 XML_SLOT = 5069
 # Guarded, shorten-only replacement within the native PUI extension constants.
 # Preserve the original NUL-terminated string allocation exactly.
-OLD_SUFFIX = b" | HENACY v1\\x00".replace(b"\\\\x00", b"\\x00")
-NEW_SUFFIX = b" | DEXCore\\x00"
+OLD_SUFFIX = b" | HENACY v1\x00"
+NEW_SUFFIX = b" | DEXCore\x00"
 BRAND_REGION = (0x39A6D, 0x3C000)
 CONFIG_IDS = {"exploit_fixes", "mmap_patches", "block_updates", "disable_aslr",
               "nobd_patches", "target_id", "skip_patches", "upload_prx", "enable_plugins"}
@@ -92,7 +92,7 @@ def build(base_path, menu_path, output_path):
         raise ValueError("Brand suffix collides with Settings XML or plugin boundary")
     if len(NEW_SUFFIX) > len(OLD_SUFFIX):
         raise ValueError("Replacement text does not fit verified rodata allocation")
-    patched_suffix = NEW_SUFFIX.ljust(len(OLD_SUFFIX), b"\\x00")
+    patched_suffix = NEW_SUFFIX.ljust(len(OLD_SUFFIX), b"\x00")
     candidate[offset:offset + len(OLD_SUFFIX)] = patched_suffix
     # Preserve every byte outside the two approved, non-overlapping ranges.
     assert candidate[:XML_START] == base[:XML_START]

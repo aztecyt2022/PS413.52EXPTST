@@ -30,13 +30,13 @@ assert.equal(gated.node('hostPanel').hidden,true);assert.equal(gated.intervals.s
 await gated.advance(30000);assert.equal(gated.requests.length,0);
 gated.login('wrong');assert.equal(gated.node('hostPanel').hidden,true);assert.match(gated.node('loginError').textContent,/Incorrect password/);assert.equal(gated.node('password').value,'');
 gated.login();assert.equal(gated.node('hostPanel').hidden,false);assert.equal(gated.node('loginPanel').hidden,true);assert.equal(gated.node('loadExploit').disabled,false);assert.match(gated.node('status').textContent,/10 seconds/);
-await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html?v=henacy-v1-diag-3'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
+await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html?v=dexcore-v1-diag-4'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
 console.log('PASS: no countdown or launch before password entry; wrong password gives feedback; correct password starts ten seconds.');
 
 const session=new Map(),preference=new Map(),disabled=environment(ps4('13.52'),{session,preference});
 disabled.login();disabled.node('toggleAuto').click();await disabled.advance(30000);assert.equal(disabled.requests.length,0);
 const remembered=environment(ps4('13.52'),{session,preference});assert.equal(remembered.node('hostPanel').hidden,false);assert.equal(remembered.intervals.size,0);assert.equal(remembered.node('toggleAuto').textContent,'Enable auto loading');
-remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html?v=henacy-v1-diag-3']);
+remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html?v=dexcore-v1-diag-4']);
 remembered.node('logout').click();assert.equal(remembered.context.HEN_AUTH.allowed(),false);assert.equal(remembered.navigation.at(-1),'./');
 const blockedStorage=environment(ps4('13.52'),{storageBlocked:true});blockedStorage.login();assert.equal(blockedStorage.node('hostPanel').hidden,true);assert.match(blockedStorage.node('loginError').textContent,/storage/);
 console.log('PASS: remembered auto-load preference, manual launch, session restoration, logout, and storage failure feedback.');
@@ -47,24 +47,24 @@ for(const ua of ['Desktop browser',ps4('13.50'),ps4('14.00'),ps4('13.52.1'),ps4(
 for(const option of [{},{original:true},{henacy:true}]){const corrupt=environment(ps4('13.52'),{...option,corrupt:true});corrupt.login();corrupt.node('loadExploit').click();await corrupt.settle();assert.equal(corrupt.navigation.length,0);assert.match(corrupt.node('status').textContent,/verification failed/);assert.equal(corrupt.intervals.size,0);}
 const original=environment(ps4('13.52'),{original:true});original.login();
 assert.equal(original.node('hostTitle').textContent,'PS4 HEN 2.2.0');
-assert.equal(original.node('switchBuild').textContent,'Use HENACY v1');
+assert.equal(original.node('switchBuild').textContent,'Use DEXCore v1');
 assert.equal(original.node('switchBuild').href,'./');
 assert.equal(original.node('diagnostics').href,'loader/diagnostics.html?original=1');
 original.node('loadExploit').click();await original.settle();
-assert.deepEqual(original.navigation,['loader/jb.html?original=1&v=henacy-v1-diag-3']);
+assert.deepEqual(original.navigation,['loader/jb.html?original=1&v=dexcore-v1-diag-4']);
 assert.equal(original.requests[0],'loader/hen.bin');
 const henacy=environment(ps4('13.52'),{henacy:true});henacy.login();
-assert.equal(henacy.node('hostTitle').textContent,'HENACY v1');
+assert.equal(henacy.node('hostTitle').textContent,'DEXCore v1');
 assert.equal(henacy.node('switchBuild').href,'?original=1');
 assert.equal(henacy.node('diagnostics').href,'loader/diagnostics.html');
 assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
 await henacy.advance(10000);
-assert.deepEqual(henacy.navigation,['loader/jb.html?v=henacy-v1-diag-3']);
+assert.deepEqual(henacy.navigation,['loader/jb.html?v=dexcore-v1-diag-4']);
 assert.equal(henacy.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
 assert.equal(gated.node('switchBuild').href,'?original=1');
 assert.equal(gated.requests[0],'loader/henacy.bin?v=1-syslogo-ea1235b846b0');
-assert.equal(gated.node('hostTitle').textContent,'HENACY v1');
-assert.equal(gated.context.document.title,'HENACY v1');
+assert.equal(gated.node('hostTitle').textContent,'DEXCore v1');
+assert.equal(gated.context.document.title,'DEXCore v1');
 for(const env of [gated,original,henacy]){
   const declaration=read('loader/jb.js').match(/const PAYLOAD_FILE = ([^;]+);/)[1];
   assert.equal(vm.runInContext(declaration,env.context),env.context.HEN_BUILD.payload[0]);
@@ -72,15 +72,15 @@ for(const env of [gated,original,henacy]){
 const guestOriginal=environment(ps4('13.52'),{original:true});guestOriginal.loadEntry();
 assert.deepEqual(guestOriginal.navigation,['../index.html?original=1']);
 const guestHenacy=environment(ps4('13.52'),{henacy:true});guestHenacy.loadEntry();
-assert.equal(guestHenacy.context.document.title,'HENACY v1');
-assert.equal(guestHenacy.node('loginTitle').textContent,'HENACY v1');
+assert.equal(guestHenacy.context.document.title,'DEXCore v1');
+assert.equal(guestHenacy.node('loginTitle').textContent,'DEXCore v1');
 assert.deepEqual(guestHenacy.navigation,['../index.html']);
 console.log('PASS: exact PS4 13.52 guard; HENACY is the default; original HEN selection and existing HENACY links load matching payloads; corrupt payloads stop all launch paths.');
 
 // Retired VSH links must never select a removed binary.
-for(const [search,expected] of [['?vsh=1','HENACY v1'],['?vsh=10','HENACY v1'],
+for(const [search,expected] of [['?vsh=1','DEXCore v1'],['?vsh=10','DEXCore v1'],
                                   ['?original=1&vsh=1','PS4 HEN 2.2.0'],
-                                  ['?henacy=1&vsh=1','HENACY v1']]){
+                                  ['?henacy=1&vsh=1','DEXCore v1']]){
   const c=vm.createContext({location:{search}});c.window=c;
   vm.runInContext(read('payloads.js'),c);
   assert.equal(c.HEN_BUILD.label,expected);
@@ -156,7 +156,7 @@ assert(brandedPayload.includes(Buffer.from('hncy_system_information_logo\0')));
 assert(brandedPayload.indexOf(Buffer.from('file:///data/hen/shellui_data/icons/hen_settings_icon.png\0'),0x39000)>0x39000, 'System Information must use the same image URI as the HNCY menu.');
 console.log('PASS: System Information branding is connected to plugin boot and references the native version field and HNCY image.');
 for(const page of ['index.html','loader/jb.html'])for(const match of read(page).matchAll(/(?:src|href)="([^"#]+)"/g)){
-  const url=match[1];if(url==='data:,')continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);
+  const url=match[1];if(url==='data:,'||/^https?:\/\//.test(url))continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);
 }
 assert.match(read('loader/diagnostics.html'),/It does not start the exploit or modify the console/);
 assert(existsSync(new URL('.nojekyll',root)));assert(existsSync(new URL('README.md',root)),'README should exist');assert.doesNotMatch(read('config.js'),/local-test-password/);
@@ -165,7 +165,7 @@ console.log('PASS: HENACY and original payload hashes match; patch bytes preserv
 const retiredBrand=['PRO','HEN'].join('');
 for(const path of ['README.md','index.html','loader/jb.html','loader/diagnostics.html','entry.js','payloads.js'])
   assert(!read(path).toUpperCase().includes(retiredBrand), path+' contains obsolete branding');
-assert.match(read('README.md'),/^# HENACY v1/m);
-assert.match(read('index.html'),/<title>HENACY v1<\/title>/);
-assert.match(read('loader/jb.html'),/<title>HENACY v1/);
+assert.match(read('README.md'),/^# DEXCore v1/m);
+assert.match(read('index.html'),/<title>DEXCore v1<\/title>/);
+assert.match(read('loader/jb.html'),/<title>DEXCore v1/);
 console.log('PASS: all public page titles and project description use HENACY branding.');
