@@ -1,22 +1,10 @@
-name: Build DEXCore 13.52 native FTP Settings test kit
+name: Manual legacy fixed-size Settings test kit
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'shellui/hen_settings.xml'
-      - 'scripts/build-shellui-preview.py'
-      - 'tests/test-shellui-preview.py'
-      - 'tests/host.mjs'
-      - 'payloads.js'
-      - 'tests/system-info.c'
-      - 'scripts/test-system-info.mjs'
-      - 'scripts/promote-dexcore.py'
-      - '.github/workflows/dexcore-native.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-verify:
@@ -59,17 +47,3 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Promote checked DEXCore payload into hosted default
-        run: |
-          python3 scripts/promote-dexcore.py
-          npm test
-          npm run build
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add loader/dexcore.bin payloads.js
-          if git diff --staged --quiet; then
-            echo "DEXCore default already current"
-          else
-            git commit -m "Promote verified DEXCore 13.52 payload as default (retain HENACY legacy)"
-            git push origin HEAD:main
-          fi
