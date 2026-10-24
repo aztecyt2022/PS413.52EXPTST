@@ -1,73 +1,15 @@
-# DEXCORE native HEN FTP runtime — source integration candidate
+# DEXCORE 1.1 TEST 2 native plugins
 
-**This is native PRX source, not an activated update to the hosted DEXCORE payload.**
-The live host and its installed PS4 PRXs are unchanged until these revised
-native modules can be built, installed, and tested with the PS4 toolchain.
-Do **not** claim the current PS4 Settings toggle is already operational.
+These files overlay the pinned Scene-Collective `ps4-hen-plugins` checkout used by `.github/workflows/rebuild-full-hen.yml`. The workflow compiles all five PRXs and the full HEN installer, verifies each embedded module, and updates the website payload and checksum together. It also records `builds/dexcore-native-manifest.json`.
 
-## Implementation
+The persistent System Information overlay uses `plugin_mono/source/system_overlay.c` for a background sample every second. It loads `/data/hen/system_information_enabled` at startup; the native Settings toggle saves that file atomically. Off stops new sampling and invalidates any in-flight result. The UI thread consumes a cached snapshot with a nonblocking lock; it does not read sensor hardware or state files while rendering.
 
-The code is derived from [Scene-Collective/ps4-hen-plugins]
-(https://github.com/Scene-Collective/ps4-hen-plugins),
-not from GoldHEN's private source. Files keep the upstream license notices;
-FTP code and derivatives must be distributed under GPL-3.0-or-later.
+`system_overlay_ui.cc` resolves the loaded Mono UI2 classes and hooks `UISystem.BeginRender`. It creates its own panel and label in the Game container and the active ShellUI scene, avoiding duplicate attachment when those roots match. It releases the old scene roots during scene changes and removes panels immediately when disabled. Managed objects are pinned with GC handles; Mono invocation exceptions are caught, and failed UI operations retry without accumulating panels. An unsupported or unsafe render prologue is left unmodified and reported in the System Information status row.
 
-- `plugin_server/source/ftp_runtime.c`: runs from native HEN's
-  `plugin_server.prx`; missing `/data/hen/ftp_enabled` means **OFF**.
-  Watches the file about every 250 ms. Starts and stops the FTP worker without
-  stopping the independent kernel-log thread.
-- `plugin_server/source/ftp/ftp.c`: original native `ftpsrv` on TCP **2121**;
-  bounded accept loop; closes the listening socket and interrupts client
-  commands when disabled. Notifies the PS4's IP/port **after** `bind` and
-  `listen` succeed; notifies each new client's source IP and port.
-  Removes the legacy `KILL` command, which otherwise exits the full plugin.
-- `plugin_mono/source/shellui_patch/settings_menu.c`: authentic native
-  ShellUI `OnPress` / `OnPreCreate` hooks for the `ftp_enabled` toggle
-  on the `ftp_server` page. Persists state with atomic rename.
-- `hen_settings.xml`: independent FTP-only toggle under File System, without
-  changing the preexisting `enable_plugins` INI property or other actions.
+UI class and scene attachment conventions follow the primary implementation in [OSM-Made/Orbis-Toolbox](https://github.com/OSM-Made/Orbis-Toolbox), particularly `Game_Overlay.cpp`, `UI_Utilities.cpp`, `Widget.cpp` and `Label.cpp`. Native code offsets are resolved at runtime; no new firmware offsets are supplied.
 
-The native FTP server is unauthenticated and highly privileged, so enable it
-only on a trusted LAN. Anyone with LAN access may be able to read/write PS4
-files. The toggle cannot work when the HEN plugin subsystem itself is off.
+`system_metrics.c` uses read-only kernel exports when available. CPU/APU, SoC sensors, fan duty and estimated physical RAM usage each have explicit unavailable fallbacks. Fan duty is not RPM, and RAM use includes memory counted as non-free by the kernel.
 
-## Build integration still required
+`plugin_server` retains independent FTP (2121), experimental BinLoader (9090), and Klog (3232) supervisors. Connection notifications are generic and omit remote client addresses. BinLoader accepts compatible in-process flat position-independent payloads with `entry(void)`; it is not a general ELF loader.
 
-The embedded 13.52 payload is currently assembled using a SHA-guarded patch
-to precompiled `plugin_mono.prx` and `plugin_server.prx`. The new code
-**cannot fit into the existing fixed-length ShellUI XML patch alone**.
-Build both modified PRXs against a compatible OpenOrbis PS4 toolchain, then
-bundle them into the 13.52 HEN installer or deploy with verified on-console
-backup/rollback. The rebuilt test plugin uses the current DEXCORE icon and root label. The
-installed 13.52 plugin also contains a custom System Information extension
-that remains unported in this upstream-derived candidate. Replacing the
-installed module would lose that extension and has not been approved. Do not blindly overwrite it with upstream's unbranded PRX.
-
-The GitHub workflow compiles/tests the portable native supervisor using
-mock server workers, and checks source integration, **not** complete PS4
-PRXs or live firmware 13.52 operation.
-
-The old site FTPS4 payload should be removed only when the compiled native
-replacement is ready; disabling it prematurely leaves existing users
-without an FTP recovery route.
-
-## Verified native build candidate (GitHub Actions)
-
-The OpenOrbis workflow **successfully compiled** a native `plugin_server.prx`
-and `plugin_mono.prx`. The first inspected output had these measurements:
-
-- `plugin_server.prx`: 94,336 bytes, SHA-256 `8aa5b860d3f736657f8d33d93eba300aa071697fed6fb15f6c741b3c0b2aa37a`
-- `plugin_mono.prx`: 157,920 bytes, SHA-256 `08f2130341e175f5b0cd8020a48d5bc06e90cad3aee9569e04bc1eb4c553d32b`
-
-The currently embedded `plugin_mono.prx` reserves **141,152 bytes**,
-so the newer module cannot be safely substituted with the current
-size-preserving patch. The PRX candidates have no PS4 firmware 13.52
-hardware-compatibility verification. Rebuilding the parent HEN payload and
-retaining its existing DEXCORE-specific System Information hooks are required
-before any live replacement. Do not place test PRXs over a working console's
-modules without a known, independently accessible recovery route.
-
-The standalone FTPS4 browser payload is intentionally retained as a
-migration/recovery fallback until a usable native replacement is published.
-It is not part of the new native FTP implementation, and the new FTP toggle
-is not currently visible or working in the live DEXCORE release.
+Run `bash native/ftp-control/tests/run_overlay_tests.sh` for actual sampler/state tests and a deterministic Mono facade that executes the real renderer's widget, scene, cleanup and exception paths. `tests/check_source.py` also checks that the Settings callbacks are in the correct handlers. These checks and a native compile do not replace physical PS4 13.52 testing.

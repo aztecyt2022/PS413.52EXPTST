@@ -23,11 +23,8 @@ jobs:
           git -C hen-plugins submodule update --init --recursive
       - name: Overlay native FTP runtime and ShellUI hooks
         run: |
-          cp native/ftp-control/plugin_server/source/lib.c hen-plugins/plugin_server/source/lib.c
-          cp native/ftp-control/plugin_server/source/ftp/ftp.c hen-plugins/plugin_server/source/ftp/ftp.c
-          cp native/ftp-control/plugin_server/source/ftp_runtime.c hen-plugins/plugin_server/source/ftp_runtime.c
-          cp native/ftp-control/plugin_server/source/ftp_runtime.h hen-plugins/plugin_server/source/ftp_runtime.h
-          cp native/ftp-control/plugin_mono/source/shellui_patch/settings_menu.c hen-plugins/plugin_mono/source/shellui_patch/settings_menu.c
+          cp -a native/ftp-control/plugin_server/source/. hen-plugins/plugin_server/source/
+          cp -a native/ftp-control/plugin_mono/source/. hen-plugins/plugin_mono/source/
           cp native/ftp-control/hen_settings.xml hen-plugins/plugin_mono/data/hen_settings.xml
           cp assets/hen_settings_icon.png hen-plugins/plugin_mono/data/hen_settings_icon.png
           python3 native/ftp-control/tests/check_source.py
@@ -47,7 +44,7 @@ jobs:
       - name: Compile revised plugin_server and plugin_mono
         working-directory: hen-plugins
         run: |
-          bash build.sh
+          bash -e build.sh
           test -s bin/plugins/prx/plugin_server.prx
           test -s bin/plugins/prx/plugin_mono.prx
           sha256sum bin/plugins/prx/plugin_server.prx bin/plugins/prx/plugin_mono.prx

@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "ftp_runtime.h"
+#include "network_services.h"
 
 attr_public const char* g_pluginName = "plugin_example";
 attr_public const char* g_pluginDesc = "Demonstrate usage of CXX in module. Based from OpenOrbis `library_example`";
@@ -84,8 +85,10 @@ attr_public int plugin_load(struct SceEntry* args)
 {
     pthread_t pthrd = 0;
     pthread_t pthrd_ftp = 0;
-    pthread_create(&pthrd, 0, pthread_kserver, 0);
+    pthread_create(&pthrd, 0, dexcore_klog_supervisor, 0);
     pthread_create(&pthrd_ftp, 0, pthread_ftp_supervisor, 0);
+    pthread_t pthrd_binloader = 0;
+    pthread_create(&pthrd_binloader, 0, dexcore_binloader_supervisor, 0);
     // block main thread from exiting _init_env
     while (1)
     {

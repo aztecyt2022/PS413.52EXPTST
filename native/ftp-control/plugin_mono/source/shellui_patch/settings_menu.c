@@ -19,6 +19,11 @@ extern "C"
 #include <stddef.h>
 #include <signal.h>
 #include <pthread.h>
+#include <time.h>
+#include "../system_metrics.h"
+#include "../system_overlay.h"
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 
 #include "../../../common/syscall.h"
 
@@ -449,6 +454,88 @@ static bool DexcoreFtpReadState(void)
     return value == '1';
 }
 
+/* DEXCORE native Settings callbacks for independently switchable servers.
+ * Included in the existing settings_menu.c ahead of NewOnPress/NewOnPreCreate.
+ */
+static bool DexcoreNetworkValid(const char* key)
+{
+    return key && (!strcmp(key,"binloader_enabled") || !strcmp(key,"klog_enabled"));
+}
+static bool DexcoreNetworkWriteState(const char* key, bool enabled)
+{
+    if (!DexcoreNetworkValid(key)) return false;
+    char path[96], temp[96];
+    if (snprintf(path,sizeof(path),"/data/hen/%s",key) >= (int)sizeof(path)) return false;
+    if (snprintf(temp,sizeof(temp),"/data/hen/%s.tmp",key) >= (int)sizeof(temp)) return false;
+    FILE* file=fopen(temp,"wb");
+    if (!file) return false;
+    bool ok=fputc(enabled?'1':'0',file)!=EOF;
+    ok=fputc('\n',file)!=EOF && ok;
+    if (fflush(file)) ok=false;
+    if (fclose(file)) ok=false;
+    if (ok && rename(temp,path)==0) return true;
+    remove(temp);
+    return false;
+}
+static bool DexcoreNetworkReadState(const char* key)
+{
+    if (!DexcoreNetworkValid(key)) return false;
+    char path[96];
+    if (snprintf(path,sizeof(path),"/data/hen/%s",key) >= (int)sizeof(path)) return false;
+    FILE* file=fopen(path,"rb");
+    if (!file) return false;
+    int state=fgetc(file);
+    fclose(file);
+    return state=='1';
+}
+static void DexcoreNetworkGetIPv4(char out[INET_ADDRSTRLEN])
+{
+    snprintf(out, INET_ADDRSTRLEN, "%s", "Not connected");
+    struct ifaddrs* all=NULL;
+    if (getifaddrs(&all)) return;
+    for (struct ifaddrs* p=all;p;p=p->ifa_next)
+    {
+        if (!p->ifa_addr || p->ifa_addr->sa_family!=AF_INET || !strncmp(p->ifa_name,"lo",2)) continue;
+        char temp[INET_ADDRSTRLEN];
+        struct sockaddr_in* addr=(struct sockaddr_in*)p->ifa_addr;
+        if (inet_ntop(AF_INET,&addr->sin_addr,temp,sizeof(temp)) &&
+            strncmp(temp,"0.",2) && strncmp(temp,"127.",4))
+        {
+            snprintf(out, INET_ADDRSTRLEN, "%s", temp);
+            break;
+        }
+    }
+    freeifaddrs(all);
+}
+
+/* Persistent native overlay state and read-only cached Settings rows. */
+static bool DexcoreInfoEnabled(void)
+{
+    return dexcore_overlay_enabled()!=0;
+}
+static bool DexcoreInfoSetEnabled(bool enabled)
+{
+    return dexcore_overlay_set_enabled(enabled)!=0;
+}
+static bool DexcoreInfoMetricId(const char* id)
+{
+    if(!id)return false;
+    return !strcmp(id,"system_info_cpu") || !strcmp(id,"system_info_soc0") ||
+           !strcmp(id,"system_info_soc1") || !strcmp(id,"system_info_soc") ||
+           !strcmp(id,"system_info_fan") || !strcmp(id,"system_info_ram");
+}
+static void DexcoreInfoDisplayRow(const void *settings,const void *element,const char *id)
+{
+    bool enabled=DexcoreInfoEnabled();
+    Mono_Set_Property(settings,element,"Visible",&enabled);
+    if(!enabled)return;
+    DexcoreOverlayFrame frame={};
+    dexcore_overlay_get_frame(&frame);
+    char title[144]={};
+    dexcore_metrics_format(&frame.metrics,id,title,sizeof(title));
+    if(title[0])Mono_Set_Property(settings,element,"Title",Mono_New_String(title));
+}
+
 extern "C" int kill(int, int);
 
 static void NewOnPress(const void* p1, const void* element, const void* p3)
@@ -466,6 +553,27 @@ static void NewOnPress(const void* p1, const void* element, const void* p3)
             Notify(TEX_ICON_SYSTEM, "DEXCORE FTP state could not be saved");
             Mono_Set_Property(settings, element, "Value",
                               Mono_New_String(DexcoreFtpReadState() ? "1" : "0"));
+        }
+    }
+    if (Type->value.u32 == ToggleSwitch &&
+        (g_PageID == wSID(L"binloader_server") || g_PageID == wSID(L"klog_server")) &&
+        DexcoreNetworkValid(Id))
+    {
+        if (!DexcoreNetworkWriteState(Id, Value && Value[0] == '1'))
+        {
+            Notify(TEX_ICON_SYSTEM, "DEXCORE Network: unable to save service state");
+            Mono_Set_Property(settings, element, "Value",
+                              Mono_New_String(DexcoreNetworkReadState(Id) ? "1" : "0"));
+        }
+    }
+    if (Type->value.u32 == ToggleSwitch &&
+        g_PageID == wSID(L"system_information") && strcmp(Id,"system_info_enabled")==0)
+    {
+        if(!DexcoreInfoSetEnabled(Value && Value[0]=='1'))
+        {
+            Notify(TEX_ICON_SYSTEM,"DEXCORE System Information: failed to save state");
+            Mono_Set_Property(settings,element,"Value",
+                              Mono_New_String(DexcoreInfoEnabled()?"1":"0"));
         }
     }
     if (IsValidElementType(Type))
@@ -518,11 +626,47 @@ static void NewOnPreCreate(void* p1, const void* element, void* p3)
     const char* Id = mono_string_to_utf8(Mono_Get_Property(settings, element, "Id"));
     const char* Value = mono_string_to_utf8(Mono_Get_Property(settings, element, "Value"));
     MonoObject* Type = (MonoObject*)Mono_Get_Property(settings, element, "Type");
+    if (Id && !strncmp(Id,"system_info_",12))
+    {
+        if (Type->value.u32 == ToggleSwitch &&
+            strcmp(Id,"system_info_enabled")==0)
+        {
+            Mono_Set_Property(settings,element,"Value",
+                              Mono_New_String(DexcoreInfoEnabled()?"1":"0"));
+        }
+        else if(DexcoreInfoMetricId(Id))
+        {
+            DexcoreInfoDisplayRow(settings,element,Id);
+        }
+        else if(!strcmp(Id,"system_info_note"))
+        {
+            bool show=DexcoreInfoEnabled();
+            Mono_Set_Property(settings,element,"Visible",&show);
+            char note[160];
+            snprintf(note,sizeof(note),"Overlay: %s",dexcore_overlay_ui_status());
+            Mono_Set_Property(settings,element,"Title",Mono_New_String(note));
+        }
+    }
     if (Type->value.u32 == ToggleSwitch &&
         g_PageID == wSID(L"ftp_server") && strcmp(Id, "ftp_enabled") == 0)
     {
         Mono_Set_Property(settings, element, "Value",
                           Mono_New_String(DexcoreFtpReadState() ? "1" : "0"));
+    }
+    if (Type->value.u32 == ToggleSwitch &&
+        (g_PageID == wSID(L"binloader_server") || g_PageID == wSID(L"klog_server")) &&
+        DexcoreNetworkValid(Id))
+    {
+        Mono_Set_Property(settings, element, "Value",
+                          Mono_New_String(DexcoreNetworkReadState(Id) ? "1" : "0"));
+    }
+    if (strcmp(Id, "network_ip") == 0)
+    {
+        char title[80];
+        char addr[INET_ADDRSTRLEN];
+        DexcoreNetworkGetIPv4(addr);
+        snprintf(title, sizeof(title), "PS4 LAN Address: %s", addr);
+        Mono_Set_Property(settings, element, "Title", Mono_New_String(title));
     }
     if (IsValidElementType(Type))
     {
@@ -944,6 +1088,7 @@ void UploadOnBranch(void* app_exe)
     {
         WriteJump64(SystemAreaIconPSPlus_LaunchPlugin, (uintptr_t)PSPlusStart);
     }
+    dexcore_overlay_ui_install();
 }
 
 void UploadNewCorelibStreamReader(void)

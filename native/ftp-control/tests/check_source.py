@@ -14,12 +14,13 @@ assert nodes["ftp_enabled"].get("value")=="0"
 assert nodes["ftp_enabled"] in list(nodes["ftp_server"])
 assert nodes["payload_options"] in list(nodes["hncy_system"])
 assert "pthread_ftp_supervisor" in server
-assert "pthread_create(&pthrd, 0, pthread_kserver, 0)" in server
+assert "pthread_create(&pthrd, 0, dexcore_klog_supervisor, 0)" in server
 assert "pthread_create(&pthrd_ftp, 0, pthread_ftp, 0)" not in server
 assert "while (ftp_is_active())" in ftp
 assert "while (1)" not in ftp[ftp.index("int ftp_main(void)"):]
 assert "DEXCORE native FTP enabled" in ftp
-assert "DEXCORE FTP connected" in ftp
+assert "DEXCORE FTP client connected" in ftp
+assert "Client: %s:%u" not in ftp
 assert ftp.index("DEXCORE native FTP enabled")>ftp.index("if (listen(srvfd")
 assert '{"KILL", ftp_cmd_unavailable}' in ftp
 assert "wSID(L\"ftp_server\")" in settings
@@ -30,3 +31,16 @@ assert "DexcoreFtpWriteState" in settings and "DexcoreFtpReadState" in settings
 assert "/data/hen/ftp_enabled" in settings
 compact=''.join(ElementTree.tostring(menu,encoding='unicode').splitlines())
 print("PASS: native FTP files retain independent enable/disable semantics and listening/connection notifications")
+
+mono=(root/"plugin_mono/source/lib.cc").read_text()
+assert 'dexcore_overlay_start()' in mono
+assert 'dexcore_overlay_ui_install()' in mono
+press=settings[settings.index('static void NewOnPress('):settings.index('static void NewOnPreCreate(')]
+precreate=settings[settings.index('static void NewOnPreCreate('):settings.index('static void NewOnPageActivating(')]
+assert 'DexcoreInfoSetEnabled' in press
+assert 'DexcoreInfoDisplayRow(settings,element,Id)' in precreate
+assert 'DexcoreInfoDisplayRow(settings,element,Id)' not in press
+assert 'dexcore_overlay_set_enabled' in settings
+assert 'system_info_enabled' in nodes and 'network_servers' in nodes
+assert 'persistent native overlay' in nodes['system_info_enabled'].get('description')
+print('PASS: persistent native overlay sampler, renderer initialization and Settings callback routing are wired')

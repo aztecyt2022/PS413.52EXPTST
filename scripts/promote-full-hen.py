@@ -7,10 +7,15 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import argparse
 
 root=Path(__file__).resolve().parent.parent
-candidate=root/"hen/hen.bin"
-manifest=json.loads((root/"dist/dexcore-full-hen-manifest.json").read_text())
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--candidate',type=Path,default=root/"hen/hen.bin")
+parser.add_argument('--manifest',type=Path,default=root/"dist/dexcore-full-hen-manifest.json")
+args=parser.parse_args()
+candidate=args.candidate
+manifest=json.loads(args.manifest.read_text())
 data=candidate.read_bytes()
 digest=hashlib.sha256(data).hexdigest()
 expected=manifest["payload"]
@@ -39,4 +44,6 @@ selector='''(function(){
 })();
 '''%(digest[:12],len(data),digest)
 (root/"payloads.js").write_text(selector)
+(root/"builds").mkdir(exist_ok=True)
+(root/"builds/dexcore-native-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
 print("Promoted full DEXCORE HEN:",len(data),digest)

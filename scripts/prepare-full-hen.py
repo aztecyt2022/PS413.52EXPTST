@@ -9,6 +9,11 @@ import sys
 
 if len(sys.argv)!=2: raise SystemExit("usage: prepare-full-hen.py PATH_TO_PS4_HEN")
 root=Path(sys.argv[1])
+for relative in ("kpayload/Makefile", "installer/Makefile"):
+    makefile=root/relative
+    text=makefile.read_text()
+    if ".DEFAULT_GOAL := all" not in text:
+        makefile.write_text(".DEFAULT_GOAL := all\n"+text)
 main=root/"installer/source/main.c"
 version=root/"installer/include/version.h"
 offsets=root/"kpayload/source/offsets/1352.c"
@@ -26,7 +31,7 @@ main.write_text(source)
 header=version.read_text()
 before='#define VERSION "2.2.0 BETA"'
 assert header.count(before)==1
-header=header.replace(before,'#define VERSION "1.1"')
+header=header.replace(before,'#define VERSION "1.1 TEST 2"')
 assert '#define MAX_FW 1400' in header and '#define MIN_FW 474' in header
 version.write_text(header)
 # The native 13.52 offsets are required; never invent kernel addresses.

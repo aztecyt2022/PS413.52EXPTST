@@ -1,4 +1,4 @@
-# DEXCORE 1.1 — PS4 Firmware 13.52
+# DEXCORE 1.1 TEST 2 — PS4 Firmware 13.52
 
 **Website:** https://aztecyt2022.github.io/PS413.52EXPTST/
 
@@ -8,7 +8,9 @@ The published `loader/dexcore.bin` is built from the full HEN installer, includi
 
 ## Features inside DEXCORE (PS4 Settings)
 
-The console's native **DEXCORE → File System → FTP Server** menu contains the independent FTP enable/disable control, not the website. Native HEN FTP listens on TCP **2121**, is off by default on a fresh install, and includes notifications with listening IP/port and connecting client IP/port. DEXCORE Tools and system settings also live inside the native plugin.
+**DEXCORE → System → System Information → On** enables a persistent native overlay with CPU/APU and SoC temperatures, fan duty percentage, and estimated RAM utilization. It refreshes every second after leaving Settings, follows the active ShellUI scene, and attaches to the Game container for the game overlay. Off removes its panels on the next render frame and stops sensor reads. The setting survives a full console restart. Unsupported sensor APIs display **Unavailable**.
+
+The console's **DEXCORE → File System → FTP Server** control starts/stops FTP on TCP **2121**. **Network Servers** contains the PS4 LAN address, BinLoader on **9090**, and Klog on **3232**. Each service is independently controlled and defaults Off when its state file is absent. Startup notices show the PS4 server's address; connection notices omit the remote client's IP and port. BinLoader currently supports compatible in-process flat PIC payloads with an `entry(void)` ABI.
 
 No standalone FTPS4 launch button, file browser, or FTP control mechanism is provided by the website.
 
@@ -16,7 +18,11 @@ No standalone FTPS4 launch button, file browser, or FTP control mechanism is pro
 
 - Full HEN build: [rebuild-full-hen.yml](.github/workflows/rebuild-full-hen.yml)
 - Native FTP source: [native/ftp-control](native/ftp-control/README.md)
+- Current binary size, checksum and embedded modules: [build manifest](builds/dexcore-native-manifest.json)
+- Persistent overlay state and UI lifecycle tests: [run_overlay_tests.sh](native/ftp-control/tests/run_overlay_tests.sh)
 - Exploit host tests: [tests/host.mjs](tests/host.mjs)
 - Native payload manifest and checksums are generated from the built executable, not hardcoded assumptions.
 
-**Hardware warning:** The new native HEN plugins and FTP toggle are compiled and structurally tested but have not been verified on a physical PS4 running firmware 13.52. Preserve a backup of `/data/hen` and a recovery method before testing. FTP is unauthenticated; only enable it on a trusted LAN.
+Fully restart the PS4 before loading this test build. The notification should say **DEXCORE 1.1 TEST 2 enabled**. Existing `/data/hen/hen.ini` must retain `enable_plugins = 1` and `upload_prx = 1` to load the new modules. Clear browser cache if the loader reports a checksum mismatch or loads the previous version.
+
+The native build and automated tests do not establish physical PS4 13.52 compatibility. Back up `/data/hen` before the first console test; use the network services only on a trusted LAN.

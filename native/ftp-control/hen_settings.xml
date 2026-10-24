@@ -4,19 +4,28 @@
     <setting_list id="file_system" title="File System" initial_focus_to="ftp_server">
       <setting_list id="ftp_server" title="FTP Server" initial_focus_to="ftp_enabled">
         <toggle_switch id="ftp_enabled" title="Enable FTP Server" description="Native HEN FTP (TCP 2121); off by default." value="0"/>
-        <message id="ftp_info" title="Native HEN FTP: TCP 2121" description="PS4 notifies listening and connecting IP/port."/>
+        <message id="ftp_info" title="Native HEN FTP: TCP 2121" description="PS4 notifies the listening server IP and port."/>
       </setting_list>
-      <setting_list id="hncy_tools" title="DEXCORE Tools" initial_focus_to="id_plugin_manager">
-        <link id="id_plugin_manager" title="Plugin Manager" description="Manage game plugins in /data/hen/plugins." file="HEN/data/PluginManager.xml" />
-        <setting_list id="hncy_packages" title="Package Manager" initial_focus_to="id_game_package_installer_hdd">
-          <link id="id_game_package_installer_hdd" title="Install Package from Hard Disk" description="Install packages from /data/pkg." file="PkgInstaller/data/pkginstaller_hdd.xml" />
-          <link id="id_game_package_installer_usb" title="Install Package from USB Storage" description="Install packages from USB." file="PkgInstaller/data/pkginstaller_usb.xml" />
+      <setting_list id="network_servers" title="Network Servers" initial_focus_to="binloader_server">
+        <message id="network_ip" title="PS4 LAN Address: Checking" description="Address is refreshed when opening this menu."/>
+        <setting_list id="binloader_server" title="BinLoader" initial_focus_to="binloader_enabled">
+          <toggle_switch id="binloader_enabled" title="Enable BinLoader" description="Raw BIN payload listener: TCP 9090. Experimental; trusted LAN only." value="0"/>
+          <message id="binloader_info" title="BinLoader: TCP 9090" description="PS4 notifies the listening server IP and port."/>
         </setting_list>
+        <setting_list id="klog_server" title="Klog" initial_focus_to="klog_enabled">
+          <toggle_switch id="klog_enabled" title="Enable Klog Server" description="Stream /dev/klog over TCP 3232; disabled by default." value="0"/>
+          <message id="klog_info" title="Klog: TCP 3232" description="PS4 notifies the listening server IP and port."/>
+        </setting_list>
+      </setting_list>
+      <link id="id_plugin_manager" title="Plugin Manager" description="Manage game plugins in /data/hen/plugins." file="HEN/data/PluginManager.xml" />
+      <setting_list id="hncy_packages" title="Package Manager" initial_focus_to="id_game_package_installer_hdd">
+        <link id="id_game_package_installer_hdd" title="Install Package from Hard Disk" description="Install packages from /data/pkg." file="PkgInstaller/data/pkginstaller_hdd.xml" />
+        <link id="id_game_package_installer_usb" title="Install Package from USB Storage" description="Install packages from USB." file="PkgInstaller/data/pkginstaller_usb.xml" />
       </setting_list>
     </setting_list>
     <setting_list id="hncy_system" title="System" initial_focus_to="payload_options">
       <setting_list id="payload_options" title="System Settings" initial_focus_to="enable_plugins">
-        <toggle_switch id="enable_plugins" title="Enable Plugins (Restart Required)" description="Controls HEN plugins and klog. Launch FTPS4 separately from the website." confirm="Disable plugins and kernel logging after restart?" confirm_phrase="Yes,No" value="0"/>
+        <toggle_switch id="enable_plugins" title="Enable Plugins (Restart Required)" description="Controls native HEN plugins; restart required." confirm="Disable plugins and kernel logging after restart?" confirm_phrase="Yes,No" value="0"/>
         <!-- The IDs must match ini keys! -->
         <toggle_switch id="exploit_fixes" title="Enable exploit fixes" description="Attempts to repatch bad/missing patches that should have been made by the exploit.&#xa;This helps ensure system stability after the initial jailbreak process." value="0"/>
         <toggle_switch id="mmap_patches" title="Enable memory mapping patches" description="Enable memory mapping patches for decrypting binary files.&#xa;These patches allow the system to properly handle encrypted executables and libraries." value="0"/>
@@ -45,6 +54,16 @@
       </list>
         <toggle_switch id="skip_patches" title="Skip userland patches" description="Skip applying SceShellCore, SceShellUI, and RemotePlay patches.&#xa;Useful for testkit users." value="0" confirm="Are you sure you want to enable this? Enabling this will not allow homebrew apps to launch." confirm_phrase="Yes,No"/>
         <toggle_switch id="upload_prx" title="Write plugin files to HDD" description="Write the existing HEN plugin PRX files to the console's hard drive.&#xa;Enabling this is recommended for first-time setup." value="0"/>
+      </setting_list>
+      <setting_list id="system_information" title="System Information" initial_focus_to="system_info_enabled">
+        <toggle_switch id="system_info_enabled" title="System Information" description="Show the persistent native overlay with live temperatures, fan duty and estimated RAM usage." value="0"/>
+        <message id="system_info_cpu" title="CPU / APU: Unavailable" description="Internal processor temperature (degrees Celsius)."/>
+        <message id="system_info_soc0" title="SoC Sensor 0: Unavailable" description="Primary SoC thermal sensor if available."/>
+        <message id="system_info_soc1" title="SoC Sensor 1: Unavailable" description="Secondary SoC thermal sensor if available."/>
+        <message id="system_info_soc" title="SoC Sensor: Unavailable" description="Internal SoC temperature, when supported."/>
+        <message id="system_info_fan" title="Fan Duty: Unavailable" description="Reported fan duty cycle; percentage, not RPM."/>
+        <message id="system_info_ram" title="RAM Used: Unavailable" description="Estimated utilization from physical RAM and free pages."/>
+        <message id="system_info_note" title="Overlay: live readings every second" description="The on-screen panel stays visible after leaving Settings. Off removes it immediately."/>
       </setting_list>
       <button id="id_restart_shellui" title="Restart ShellUI" description="Restarts ShellUI."/>
     </setting_list>

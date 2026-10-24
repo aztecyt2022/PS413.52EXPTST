@@ -29,11 +29,8 @@ jobs:
           git -C hen checkout d077fb4031cf0e089fb7a233cebeebcd1ed3c68e
       - name: Overlay DEXCORE FTP and native Settings source
         run: |
-          cp native/ftp-control/plugin_server/source/lib.c hen-plugins/plugin_server/source/lib.c
-          cp native/ftp-control/plugin_server/source/ftp/ftp.c hen-plugins/plugin_server/source/ftp/ftp.c
-          cp native/ftp-control/plugin_server/source/ftp_runtime.c hen-plugins/plugin_server/source/ftp_runtime.c
-          cp native/ftp-control/plugin_server/source/ftp_runtime.h hen-plugins/plugin_server/source/ftp_runtime.h
-          cp native/ftp-control/plugin_mono/source/shellui_patch/settings_menu.c hen-plugins/plugin_mono/source/shellui_patch/settings_menu.c
+          cp -a native/ftp-control/plugin_server/source/. hen-plugins/plugin_server/source/
+          cp -a native/ftp-control/plugin_mono/source/. hen-plugins/plugin_mono/source/
           cp native/ftp-control/hen_settings.xml hen-plugins/plugin_mono/data/hen_settings.xml
           cp assets/hen_settings_icon.png hen-plugins/plugin_mono/data/hen_settings_icon.png
           python3 native/ftp-control/tests/check_source.py
@@ -53,7 +50,7 @@ jobs:
       - name: Build all five HEN plugins including new native FTP
         working-directory: hen-plugins
         run: |
-          bash build.sh
+          bash -e build.sh
           mkdir -p ../hen/tmp
           for prx in plugin_bootloader plugin_loader plugin_mono plugin_server plugin_shellcore; do
             test -s "bin/plugins/prx/$prx.prx"
@@ -77,6 +74,8 @@ jobs:
           python3 scripts/promote-full-hen.py
           npm test
           npm run build
+          cp hen/hen.bin dist/dexcore-native-ftp-13.52-CANDIDATE.bin
+          cp builds/dexcore-native-manifest.json dist/dexcore-full-hen-manifest.json
           test -s dist/loader/dexcore.bin
           test ! -e dist/loader/user-ftp.bin
           test ! -e dist/ftp-payload.js
@@ -85,11 +84,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add loader/dexcore.bin payloads.js
+          git add loader/dexcore.bin payloads.js builds/dexcore-native-manifest.json
           if git diff --staged --quiet; then
             echo "Full DEXCORE payload and hash already current"
           else
-            git commit -m "Deploy verified DEXCORE 1.1 full native HEN payload (FTP only inside console)"
+            git commit -m "Deploy DEXCORE 1.1 TEST 2 native system overlay payload"
             git pull --rebase origin main
             git push origin HEAD:main
           fi

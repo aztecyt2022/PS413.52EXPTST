@@ -24,3 +24,5 @@ jobs:
           /tmp/dexcore-ftp-supervisor-test
       - name: Verify native source linkage, notifications, and XML controls
         run: python3 native/ftp-control/tests/check_source.py
+      - name: Exercise live overlay state, sampler and native UI adapter
+        run: bash native/ftp-control/tests/run_overlay_tests.sh

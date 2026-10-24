@@ -454,12 +454,8 @@ ftp_serve(uint16_t port, int notify_user)
             close(connfd);
             continue;
         }
-        char peer[INET_ADDRSTRLEN] = {0};
-        inet_ntop(AF_INET, &client_addr.sin_addr, peer, sizeof(peer));
-        Notify(TEX_ICON_SYSTEM,
-               "DEXCORE FTP connected\nClient: %s:%u\nServer: %s:%u",
-               peer, (unsigned)ntohs(client_addr.sin_port),
-               server_ip, (unsigned)port);
+        /* Do not retrieve or display the connecting peer's IP/port. */
+        Notify(TEX_ICON_SYSTEM, "DEXCORE FTP client connected");
         if (pthread_create(&trd, NULL, ftp_thread, (void*)(long)connfd))
         {
             ftp_untrack_client(connfd);

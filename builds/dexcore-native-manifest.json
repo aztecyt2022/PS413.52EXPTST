@@ -1,0 +1,59 @@
+{
+  "product": "DEXCORE",
+  "version": "1.1",
+  "fw_target": "13.52",
+  "build_variant": "TEST 2",
+  "build": "full installer recompiled from Scene-Collective PS4-HEN (not fixed-slot patch)",
+  "tested_on_hardware": false,
+  "native_ftp_port": 2121,
+  "ftp_disabled_on_first_install": true,
+  "native_ftp_settings_toggle_included": true,
+  "running_native_ftp_verified_on_hardware": false,
+  "ftp_requires_plugin_subsystem": true,
+  "install_requires_upload_prx_enabled": true,
+  "requires_fresh_ps4_boot_for_install": true,
+  "standalone_ftps4_embedded": false,
+  "system_information_overlay": {
+    "native_renderer": "Mono UI2 widgets in UISystem.BeginRender",
+    "scenes": [
+      "Game container",
+      "active ShellUI scene"
+    ],
+    "sampler_interval_ms": 1000,
+    "ui_scene_check_interval_ms": 250,
+    "off_removes_panels_and_stops_sampling": true,
+    "enabled_state_persists": true,
+    "console_verified": false
+  },
+  "payload": {
+    "bytes": 550048,
+    "sha256": "d913baa41b9cb76c073c869853c04a8683f0b23509d9323586a1ae8802c2af77"
+  },
+  "embedded_prxs": {
+    "plugin_bootloader": {
+      "bytes": 54112,
+      "sha256": "be4855727a4cd083b19c73f54e4936d339228e3818a2cca1943771e5b957f863",
+      "offset": 494944
+    },
+    "plugin_loader": {
+      "bytes": 54912,
+      "sha256": "d019cb776b083ba53323a0ed3cfefe76496b2ed27b1803effca83752e9199d98",
+      "offset": 440032
+    },
+    "plugin_mono": {
+      "bytes": 175424,
+      "sha256": "3721ee52a39c60fdc6b5d7e14bc009ff4fdcdb78163ea7eed2d9c3730828e419",
+      "offset": 171008
+    },
+    "plugin_server": {
+      "bytes": 93600,
+      "sha256": "5c4aa62686f481a1e8c924d4ebe58a6f70aac072a5806c4e8f3b699dc711eae6",
+      "offset": 346432
+    },
+    "plugin_shellcore": {
+      "bytes": 88272,
+      "sha256": "76f9ea5c34c025e3f99f303e98829d89108cd9c10f28678de9729638bf85cf96",
+      "offset": 82720
+    }
+  }
+}
