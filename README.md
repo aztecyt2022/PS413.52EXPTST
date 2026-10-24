@@ -14,6 +14,17 @@ DEXCORE 1.1 is a PS4 13.52 homebrew host with a new red, hacker-terminal interfa
 
 **FTP caveat:** The standalone FTPS4 payload uses the existing exploit runner and has not been validated on physical PS4 firmware 13.52. The bundled native HEN FTP autostart thread has been disabled in the verified native candidate, while kernel logging remains active. If a PS4 has an older plugin already installed, it can continue loading an old FTP service from disk until refreshed. Keep FTP on a trusted LAN and maintain recovery backups.
 
+## GoldHEN-style FTP management (user-provided FTPS4)
+
+GoldHEN has a dedicated FTP on/off setting and normally listens on TCP 2121. DEXCORE keeps the **user-provided FTPS4 binary** (TCP **1337**) unchanged rather than copying GoldHEN's private implementation or silently switching the uploaded FTP file.
+
+- **Off by default:** The built-in HEN FTP autostart is already disabled in the DEXCORE native candidate. Loading the HEN plugin subsystem does not start this server.
+- **Enable FTP:** After loading DEXCORE on a PS4 13.52 console, choose **ENABLE FTPS4 :1337** in the DEXCORE website. FTPS4 itself displays the console's IP address and port when it initializes.
+- **Status:** On a computer on the same trusted LAN, download `tools/ftp-control.py` from the website and run `python dexcore-ftp-control.py --ip PS4_IP --status`. It checks the live FTP banner, not a stored preference.
+- **Disable FTP without a reboot:** Run `python dexcore-ftp-control.py --ip PS4_IP --stop`. The helper verifies `220 FTPS4 Server ready.`, sends FTPS4's documented `SHUTDOWN` command, then checks that the port stops accepting connections. Plugin loading and kernel logging are unaffected.
+
+**Remaining difference from GoldHEN:** The PS4 native Settings page is informational; an independently wired native start/stop toggle is not present. DEXCORE cannot safely send raw FTP commands from ordinary browser JavaScript, so stopping currently needs a LAN computer or other FTP client. This workflow is **not** a native GoldHEN equivalent, and firmware 13.52 hardware testing has not yet confirmed the FTPS4 payload. Keep the browser process alive while using the FTP service.
+
 ## PS4 Settings menu
 
 ```

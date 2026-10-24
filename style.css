@@ -43,3 +43,11 @@ a{color:#f6a4af}p{word-wrap:break-word}
 @media(max-width:840px){.app-shell{width:calc(100% - 24px);padding-top:18px}.masthead{display:block}.header-meta{justify-content:flex-start;margin-top:18px}.main-grid,.login-panel{grid-template-columns:1fr}.visual-panel,.terminal-panel{min-height:0}.logo-stage{height:300px}.login-art{min-height:260px}.login-art img{max-height:260px}.login-console h2{margin-top:20px}}
 @media(max-width:500px){.modules-grid{grid-template-columns:1fr}.controls{display:block}.controls .cmd-btn{width:100%;margin-bottom:9px}.panel-topline{font-size:9px}.masthead h1{font-size:38px}.visual-foot .right{display:none}.console-heading{font-size:18px}.console-output{margin:14px 14px 20px}.footer-bar{display:block}.footer-bar button{display:block;margin-top:8px}}
 @media(prefers-reduced-motion:reduce){.caret{animation:none}.cmd-btn{transition:none}}
+
+/* GoldHEN-inspired, independent FTPS4 control help. This is not a fake PS4-native toggle. */
+.ftp-help{padding-top:12px;margin-top:12px;border-top:1px solid #52202a}
+.ftp-help .ftp-help-title{color:#fb879a;font:700 10px Consolas,Monaco,monospace;letter-spacing:1px}
+.ftp-help details{margin-top:8px;border:1px solid #642834;background:#16090e;padding:10px;color:#e0afb9;font-size:11px}
+.ftp-help summary{cursor:pointer;color:#ff8796;font-weight:700;outline-offset:4px}
+.ftp-help code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;margin:9px 0;padding:8px;background:#0a0508;border:1px solid #3e2026;color:#fff2f3;font:11px/1.5 Consolas,Monaco,monospace}
+.ftp-help .inline-link{font-size:10px}

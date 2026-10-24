@@ -6,6 +6,7 @@
     "build": "node scripts/build.mjs",
     "test": "node tests/host.mjs",
     "test:native": "node scripts/test-system-info.mjs",
-    "test:shellui": "python3 tests/test-shellui-preview.py"
+    "test:shellui": "python3 tests/test-shellui-preview.py",
+    "test:ftp": "python3 tests/test-ftp-control.py"
   }
 }
