@@ -12,11 +12,15 @@ import re
 import struct
 
 ROOT=Path(__file__).resolve().parents[1]
-SOURCE_SHA="6e2f6c55187a8730f40639b0c7adf7a9096a74d37c149cfbcc104f22b3d6f29a"
+SOURCE_SHA="78cf90655361b49623940342fbb6991082003bb0150c012d0619558e648eaeef"
 START=0x29C80
 END=0x4C3E0
 XML_OFFSET=0x386A0
 XML_SIZE=5069
+SERVER_START=0x4C3E0
+SERVER_END=0x5F220
+FTP_CREATE_CALL=0x50155
+KLOG_CREATE_CALL=0x5013E
 
 
 def generate(source: Path, output: Path):
@@ -47,15 +51,25 @@ def generate(source: Path, output: Path):
     xml=re.sub(r">\s+<","><",xml).strip().encode("utf-8")
     if raw_xml!=xml:
         raise ValueError("Plugin's embedded Settings XML differs from checked source")
+    server=data[SERVER_START:SERVER_END]
+    if len(server)!=77376 or server[:4]!=b"\\x4f\\x15\\x3d\\x1d":
+        raise ValueError("Invalid plugin_server SELF extraction")
+    if data[FTP_CREATE_CALL:FTP_CREATE_CALL+5]!=bytes.fromhex("9090909090"):
+        raise ValueError("DEXCore native plugin_server still autostarts old FTP")
+    if data[KLOG_CREATE_CALL:KLOG_CREATE_CALL+5]!=bytes.fromhex("e84d180000"):
+        raise ValueError("DEXCore native kernel log thread changed")
     output.mkdir(parents=True,exist_ok=True)
     (output/"plugin_mono.prx").write_bytes(plugin)
+    (output/"plugin_server.prx").write_bytes(server)
     (output/"hen_settings.xml").write_bytes(raw_xml)
     manifest={
         "platform":"PS4","firmware":"13.52","brand":"DEXCore v1",
         "hardware_verified":False,"target":"/data/hen/plugin_mono.prx",
         "xml_target":"/data/hen/shellui_data/hen_settings.xml",
+        "server_target":"/data/hen/plugin_server.prx",
+        "user_ftp_port":1337, "legacy_ftp_autostart_disabled":True,
         "files":{name:{"size":len(blob),"sha256":hashlib.sha256(blob).hexdigest()}
-                 for name,blob in [("plugin_mono.prx",plugin),("hen_settings.xml",raw_xml)]}}
+                 for name,blob in [("plugin_mono.prx",plugin),("plugin_server.prx",server),("hen_settings.xml",raw_xml)]}}
     (output/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
     # Report only known labels for diagnosis; a web rebrand cannot change
     # text hardcoded in an already installed PS4 plugin.
@@ -66,6 +80,7 @@ def generate(source: Path, output: Path):
             snippet=plugin[max(0,at-24):at+64].split(b"\x00")[0]
             print("  ",hex(at),repr(snippet))
     print("Validated plugin_mono PRX:",manifest["files"]["plugin_mono.prx"])
+    print("Verified plugin_server with old FTP thread disabled:",manifest["files"]["plugin_server.prx"])
     return manifest
 
 

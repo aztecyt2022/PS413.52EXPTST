@@ -1,24 +1,27 @@
 # DEXCore v1 — PS4 13.52
 
-**DEXCore** is the new name for the HENACY PS4 13.52 homebrew host.
+DEXCore is the PS4 firmware 13.52 homebrew host.
 
 **Website:** https://aztecyt2022.github.io/PS413.52EXPTST/
 
-The host offers **one current selectable version: DEXCore v1**. Obsolete version parameters and older-build links no longer select HENACY or original HEN. The existing source binaries are kept as internal build/verification inputs but are not offered in the host menu.
+The website offers only the latest DEXCore v1 payload; old HENACY/HEN binaries are retained internally as verified build source, not available in the menu.
 
-## Native DEXCore branding and existing FTP behavior
+## FTP server: your uploaded file
 
-DEXCore's native installer and System Information notifications are rebranded. The FTP server has been reverted to the original bundled HEN `plugin_server.prx` behavior and its unmodified startup notice; the proposed FTPS4 replacement is not installed or selected.
+DEXCore now uses the **exact, unmodified** `ps4-ftp(3).bin` supplied by the user as the on-demand FTP payload.
 
-The PS4 Settings layout is restored to **FTP Server / Payload Options**, **DEXCore Tools**, and **System**. The preexisting **FTP Server + Plugins (Restart Required)** toggle remains a single shared `enable_plugins` setting. It does not independently enable FTP on demand or disable it by default. FTP uses the original server on TCP **2121**, which should only run on a trusted LAN.
+- Filename served: `loader/user-ftp.bin` (29,052 bytes)
+- SHA-256: `b4b984524ac63508255175c76bdf942ebfbd577234337bfd91e2712e27738560`
+- Service: FTPS4, **TCP 1337**. This binary has no verified semantic release version string.
+- Start: on an already-jailbroken PS4, select **Launch uploaded FTP (1337)** in the DEXCore web host. It verifies the file before launching it; the payload itself displays the PS4 IP and port in a notification after starting.
+- Stop: use the FTPS4 `SHUTDOWN` command or end its browser process. Don't expose anonymous FTP to the internet.
 
-The discontinued VSH/XMB overlay is not being restored. `?original=1`, `?legacy=1`, `?henacy=1` and `?vsh=1` now all use DEXCore v1. If you previously installed a VSH test plugin, restore your console-specific `plugin_mono.prx` backup and reboot before testing DEXCore.
+The executable is preserved losslessly in `vendor/ps4-ftp/upload-part-*.b64` and reconstructed by `scripts/materialize-user-ftp.py`; every build checks the binary's SHA-256. There is no substitute custom FTP implementation.
 
-## User-uploaded FTPS4 payload (new)
+**The old bundled HEN `plugin_server.prx` is retained for other HEN plugin features, but its FTP thread startup is disabled** in the current DEXCore native payload by a five-byte, exact-signature-guarded patch. The kernel log thread still launches normally. An older `/data/hen/plugin_server.prx` already installed on your PS4 may nevertheless auto-start the old FTP listener on port **2121**; refresh the native plugins with `upload_prx=1` and a full reboot. Keep a backup of `/data/hen`.
 
-DEXCore includes the **exact unmodified** uploaded `ps4-ftp(3).bin`, SHA-256 `b4b984524ac63508255175c76bdf942ebfbd577234337bfd91e2712e27738560`, 29,052 bytes. The binary is encoded losslessly across four tracked xz+base64 chunks in `vendor/ps4-ftp/` and reconstructed with `python3 scripts/materialize-user-ftp.py` for the GitHub Pages host. The build refuses any checksum mismatch. Its identified listening port is **1337**; its binary doesn't identify a semantic software version.
+The PS4 Settings FTP page is **informational**. Starting the user-provided FTPS4 server after boot currently uses the website button, **not** a live native Settings toggle. This distinction matters: standalone PS4 shellcode cannot safely replace a PS4 PRX plugin in-place.
 
-The site adds an explicit **Launch uploaded FTP (1337)** action. It validates the uploaded binary's SHA-256 before navigating into the existing PS4 payload runner. The runner verifies again before mapping/executing. It can use the existing jailbroken-kernel shortcut; this is **not** an automatic startup service and **not** a native ShellUI toggle. Keep the PS4 browser open while using this FTP payload. Physical PS4 13.52 support is not yet proven for the submitted file.
+See the [native Settings notes](docs/shellui-menus.md) and the [DEXCore plugin repair artifact](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-plugin-repair.yml). Hardware behavior on a PS4 13.52 has not yet been verified.
 
-**Existing installed-plugin caveat:** The new DEXCore payload disables the old FTP autostart when its freshly installed `plugin_server.prx` is loaded. An old `plugin_server.prx` already on PS4 storage may still start its original **2121** FTP listener. Reinstall/refresh HEN plugin PRXs and reboot before testing, keeping backups. Do not overwrite a `.prx` with the standalone `.bin`.
-
+No discontinued VSH/XMB overlay is included.

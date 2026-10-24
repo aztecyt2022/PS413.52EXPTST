@@ -26,6 +26,8 @@ if hashlib.sha256(original.read_bytes()).hexdigest()!="568d57e7c6bfff1b96fc20a4e
 bytes_=candidate.read_bytes()
 assert b"DEXCore v1" in bytes_ and b"FTP Server" in bytes_
 assert b" | DEXCore\x00" in bytes_
+assert bytes_[0x50155:0x5015a] == bytes.fromhex("9090909090"), "Bundled FTP still auto-starts"
+assert bytes_[0x5013e:0x50143] == bytes.fromhex("e84d180000"), "Kernel logging thread changed"
 assert b"DEXCore already loaded. Skipping..." in bytes_
 assert b"HNCY restarting" not in bytes_
 assert b"HENACY already installed" not in bytes_

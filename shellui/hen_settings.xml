@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <system_settings version="1.0" plugin="settings_root_plugin">
   <setting_list id="id_hen_settings" title="★ DEXCore v1" initial_focus_to="payload_options">
-    <setting_list id="payload_options" title="★ FTP Server / Payload Options" initial_focus_to="enable_plugins">
-      <toggle_switch id="enable_plugins" title="FTP Server + Plugins (Restart Required)" description="Starts the bundled FTP server on port 2121 and other HEN plugins after reboot/reloading HEN.&#xa;Also enables kernel logging. FTP is not independent; use only on trusted LAN."  confirm="Are you sure you want to disable this setting? Disabling this will not allow the following features:&#xa;DEXCore Menu&#xa;FTP Server&#xa;Kernel Log Server&#xa;Plugins load for apps" confirm_phrase="Yes,No" value="0"/>
+    <setting_list id="payload_options" title="★ FTP / Payload Options" initial_focus_to="enable_plugins">
+      <toggle_switch id="enable_plugins" title="Enable Plugins (Restart Required)" description="Enables the HEN plugin subsystem and kernel log server. DEXCore disables bundled FTP auto-start; launch your uploaded FTP server manually using DEXCore website (port 1337)."  confirm="Are you sure you want to disable this setting? Disabling prevents DEXCore Menu, kernel log and plugins from loading" confirm_phrase="Yes,No" value="0"/>
       <!-- The IDs must match ini keys! -->
       <toggle_switch id="exploit_fixes" title="Enable exploit fixes" description="Attempts to repatch bad/missing patches that should have been made by the exploit.&#xa;This helps ensure system stability after the initial jailbreak process." value="0"/>
       <toggle_switch id="mmap_patches" title="Enable memory mapping patches" description="Enable memory mapping patches for decrypting binary files.&#xa;These patches allow the system to properly handle encrypted executables and libraries." value="0"/>
