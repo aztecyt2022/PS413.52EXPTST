@@ -47,7 +47,7 @@ function finishUI(ok) {
   const m = document.getElementById("msg");
   if (m)
     m.textContent = ok
-      ? (params.get("ftp") === "1" ? "Uploaded FTP payload thread started — check PS4 IP, port 1337" : "DEXCore payload started")
+      ? "DEXCORE HEN payload started"
       : armedEver
         ? "Restart your console"
         : "Exploit did not complete — see diagnostic log below";
@@ -183,16 +183,13 @@ let allDone = false,
 
     const KPATCH_FILE =
       "patches/" + (off.kpatch || fwKey.replace(".", "") + ".bin");
-    const FTP_MODE = params.get("ftp") === "1";
-    const payloadSpec = FTP_MODE ? window.DEXCORE_FTP : null;
-    if (FTP_MODE && (!payloadSpec || payloadSpec.sha256 !== "b4b984524ac63508255175c76bdf942ebfbd577234337bfd91e2712e27738560" ||
-       payloadSpec.size !== 29052 || payloadSpec.port !== 1337)) {
-      mark("FTP-REFUSED", "Uploaded FTP metadata did not initialize correctly.");
+    if (params.get("ftp") === "1") {
+      mark("INVALID-MODE", "This website only loads the DEXCORE HEN payload.");
       return;
     }
-    const PAYLOAD_FILE = FTP_MODE ? payloadSpec.filename : window.HEN_BUILD.payload[0];
-    const EXPECTED_PAYLOAD_SHA = FTP_MODE ? payloadSpec.sha256 : window.HEN_BUILD.payload[2];
-    const EXPECTED_PAYLOAD_SIZE = FTP_MODE ? payloadSpec.size : window.HEN_BUILD.payload[1];
+    const PAYLOAD_FILE = window.HEN_BUILD.payload[0];
+    const EXPECTED_PAYLOAD_SHA = window.HEN_BUILD.payload[2];
+    const EXPECTED_PAYLOAD_SIZE = window.HEN_BUILD.payload[1];
     function payloadVerified(blob) {
       return !!blob && blob[0] === 0xe9 &&
         blob.length === EXPECTED_PAYLOAD_SIZE &&
