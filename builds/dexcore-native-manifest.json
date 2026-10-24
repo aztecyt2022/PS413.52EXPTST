@@ -26,34 +26,34 @@
     "console_verified": false
   },
   "payload": {
-    "bytes": 550048,
-    "sha256": "d913baa41b9cb76c073c869853c04a8683f0b23509d9323586a1ae8802c2af77"
+    "bytes": 551968,
+    "sha256": "8b6788f165058c2e6a6219907f4b0de4fa373c3f09025f98f3f0cd56eb233553"
   },
   "embedded_prxs": {
     "plugin_bootloader": {
-      "bytes": 54112,
-      "sha256": "be4855727a4cd083b19c73f54e4936d339228e3818a2cca1943771e5b957f863",
-      "offset": 494944
+      "bytes": 54496,
+      "sha256": "d2a9a4319a3ecb5087e84945b28ff4359ddf80494b5df3ba4d44ab0d5138713b",
+      "offset": 496480
     },
     "plugin_loader": {
-      "bytes": 54912,
-      "sha256": "d019cb776b083ba53323a0ed3cfefe76496b2ed27b1803effca83752e9199d98",
-      "offset": 440032
+      "bytes": 55312,
+      "sha256": "5dc314f8901174d91c86df6bfc014407f1807ba2742cbd263c91335b936564b9",
+      "offset": 441152
     },
     "plugin_mono": {
       "bytes": 175424,
-      "sha256": "3721ee52a39c60fdc6b5d7e14bc009ff4fdcdb78163ea7eed2d9c3730828e419",
-      "offset": 171008
+      "sha256": "9dfbbc83f5de356d992d04f01c4e6bde9946277890b03bca1e8ffbd7397c968b",
+      "offset": 171168
     },
     "plugin_server": {
-      "bytes": 93600,
-      "sha256": "5c4aa62686f481a1e8c924d4ebe58a6f70aac072a5806c4e8f3b699dc711eae6",
-      "offset": 346432
+      "bytes": 94544,
+      "sha256": "29dd54d637bf0b2f04a4aa716a5ddc1b144a8c2bb1b6cafdb74d4aa21e4bd716",
+      "offset": 346592
     },
     "plugin_shellcore": {
       "bytes": 88272,
-      "sha256": "76f9ea5c34c025e3f99f303e98829d89108cd9c10f28678de9729638bf85cf96",
-      "offset": 82720
+      "sha256": "58a1640f68f48861c0a77b01c6a1717518cc1e43223d5342840002ec1f9eca2e",
+      "offset": 82880
     }
   }
 }
