@@ -7,12 +7,13 @@ on:
       - 'native/ftp-control/**'
       - 'scripts/prepare-full-hen.py'
       - 'scripts/verify-full-hen.py'
+      - 'scripts/promote-full-hen.py'
       - '.github/workflows/rebuild-full-hen.yml'
       - 'assets/hen_settings_icon.png'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   full-hen-payload:
@@ -68,6 +69,29 @@ jobs:
           python3 scripts/verify-full-hen.py hen/hen.bin hen-plugins/bin/plugins/prx dist/dexcore-full-hen-manifest.json
           cp hen/hen.bin dist/dexcore-native-ftp-13.52-CANDIDATE.bin
           sha256sum dist/dexcore-native-ftp-13.52-CANDIDATE.bin
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Promote verified full HEN payload to web loader metadata
+        run: |
+          python3 scripts/promote-full-hen.py
+          npm test
+          npm run build
+          test -s dist/loader/dexcore.bin
+          test ! -e dist/loader/user-ftp.bin
+          test ! -e dist/ftp-payload.js
+          test ! -e dist/tools/ftp-control.py
+      - name: Commit the checked HEN payload and exact web checksum
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add loader/dexcore.bin payloads.js
+          if git diff --staged --quiet; then
+            echo "Full DEXCORE payload and hash already current"
+          else
+            git commit -m "Deploy verified DEXCORE 1.1 full native HEN payload (FTP only inside console)"
+            git push origin HEAD:main
+          fi
       - name: Upload rebuilt payload (unverified on actual PS4)
         uses: actions/upload-artifact@v4
         with:
