@@ -90,6 +90,7 @@ jobs:
             echo "Full DEXCORE payload and hash already current"
           else
             git commit -m "Deploy verified DEXCORE 1.1 full native HEN payload (FTP only inside console)"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
       - name: Upload rebuilt payload (unverified on actual PS4)
