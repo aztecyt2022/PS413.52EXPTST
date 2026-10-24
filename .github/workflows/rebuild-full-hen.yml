@@ -1,0 +1,81 @@
+name: Rebuild DEXCORE 1.1 native FTP HEN payload
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'native/ftp-control/**'
+      - 'scripts/prepare-full-hen.py'
+      - 'scripts/verify-full-hen.py'
+      - '.github/workflows/rebuild-full-hen.yml'
+      - 'assets/hen_settings_icon.png'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-hen-payload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get pinned upstream PS4 HEN and plugin projects
+        run: |
+          git clone --recurse-submodules https://github.com/Scene-Collective/ps4-hen-plugins.git hen-plugins
+          git -C hen-plugins checkout 49534177d69d17609bcc09cd185c88df42fed8b5
+          git -C hen-plugins submodule update --init --recursive
+          git clone https://github.com/Scene-Collective/ps4-hen.git hen
+          git -C hen checkout d077fb4031cf0e089fb7a233cebeebcd1ed3c68e
+      - name: Overlay DEXCORE FTP and native Settings source
+        run: |
+          cp native/ftp-control/plugin_server/source/lib.c hen-plugins/plugin_server/source/lib.c
+          cp native/ftp-control/plugin_server/source/ftp/ftp.c hen-plugins/plugin_server/source/ftp/ftp.c
+          cp native/ftp-control/plugin_server/source/ftp_runtime.c hen-plugins/plugin_server/source/ftp_runtime.c
+          cp native/ftp-control/plugin_server/source/ftp_runtime.h hen-plugins/plugin_server/source/ftp_runtime.h
+          cp native/ftp-control/plugin_mono/source/shellui_patch/settings_menu.c hen-plugins/plugin_mono/source/shellui_patch/settings_menu.c
+          cp native/ftp-control/hen_settings.xml hen-plugins/plugin_mono/data/hen_settings.xml
+          cp assets/hen_settings_icon.png hen-plugins/plugin_mono/data/hen_settings_icon.png
+          python3 native/ftp-control/tests/check_source.py
+          python3 scripts/prepare-full-hen.py hen
+      - name: Install build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm lld unzip zip p7zip-full xxd
+      - name: Set up OpenOrbis native PRX compiler
+        working-directory: hen-plugins
+        run: |
+          curl --fail --location --retry 3 -o toolchain-llvm-18.2.zip \
+            https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/releases/download/v0.5.3/toolchain-llvm-18.2.zip
+          unzip -q toolchain-llvm-18.2.zip
+          tar -xzf toolchain-llvm-18.tar.gz
+          echo "OO_PS4_TOOLCHAIN=$PWD/OpenOrbis/PS4Toolchain" >> "$GITHUB_ENV"
+      - name: Build all five HEN plugins including new native FTP
+        working-directory: hen-plugins
+        run: |
+          bash build.sh
+          mkdir -p ../hen/tmp
+          for prx in plugin_bootloader plugin_loader plugin_mono plugin_server plugin_shellcore; do
+            test -s "bin/plugins/prx/$prx.prx"
+            install -m 0644 "bin/plugins/prx/$prx.prx" "../hen/tmp/$prx.prx"
+          done
+      - name: Build full HEN installer with PS4 Payload SDK
+        uses: Scene-Collective/ps4-payload-sdk@main
+        with:
+          app_path: hen
+          build_command: bash build.sh
+      - name: Verify HEN and every full-sized embedded PRX
+        run: |
+          python3 scripts/verify-full-hen.py hen/hen.bin hen-plugins/bin/plugins/prx dist/dexcore-full-hen-manifest.json
+          cp hen/hen.bin dist/dexcore-native-ftp-13.52-CANDIDATE.bin
+          sha256sum dist/dexcore-native-ftp-13.52-CANDIDATE.bin
+      - name: Upload rebuilt payload (unverified on actual PS4)
+        uses: actions/upload-artifact@v4
+        with:
+          name: DEXCORE-1.1-Native-FTP-Full-HEN-PS4-13.52-CANDIDATE
+          path: |
+            dist/dexcore-native-ftp-13.52-CANDIDATE.bin
+            dist/dexcore-full-hen-manifest.json
+            hen-plugins/bin/plugins/prx/plugin_server.prx
+            hen-plugins/bin/plugins/prx/plugin_mono.prx
+          retention-days: 30
+          if-no-files-found: error
