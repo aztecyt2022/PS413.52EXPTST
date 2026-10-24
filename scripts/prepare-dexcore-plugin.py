@@ -12,6 +12,7 @@ import re
 import struct
 
 ROOT=Path(__file__).resolve().parents[1]
+# Pinned to the DEXCORE 1.1 native menu and the user-provided icon.
 SOURCE_SHA="6bb0147cb2c732adefec62384f0110961359f6030b0e6b3c667103ee56f54ee9"
 START=0x29C80
 END=0x4C3E0
