@@ -951,6 +951,36 @@ void UploadNewCorelibStreamReader(void)
     UploadResourceStreamBranch();
 }
 
+/* DEXCORE System Information text migrated from the previous binary extension.
+ * This uses upstream Mono APIs and retains the installed native Settings icon.
+ * No firmware offsets, version spoofing, or additional AOT method patches.
+ */
+static void DexcoreBrandSystemInformation(void)
+{
+    if (!App_Exe || !Root_Domain) return;
+    void* klass = Mono_Get_Class(App_Exe, "Sce.Vsh.ShellUI.AppSystem",
+                                 "SystemSoftwareVersionInfo");
+    void* instance = Mono_Get_Instance(klass, "Instance");
+    if (!klass || !instance) return;
+    void* original = Mono_Get_Property(klass, instance, "DisplayVersion");
+    if (!original) return;
+    char* current = mono_string_to_utf8(original);
+    if (!current) return;
+    const size_t size = strlen(current);
+    const char* suffix = " | DEXCORE";
+    if (size >= strlen(suffix) &&
+        strcmp(current + size - strlen(suffix), suffix) == 0)
+    {
+        mono_free(current);
+        return;
+    }
+    char branded[176] = {};
+    int n = snprintf(branded, sizeof(branded), "%s%s", current, suffix);
+    mono_free(current);
+    if (n <= 0 || (size_t)n >= sizeof(branded)) return;
+    Mono_Set_Property(klass, instance, "DisplayVersion", Mono_New_String(branded));
+}
+
 uiTYPEDEF_FUNCTION_PTR(void, FinishBootEffect_original, void* _this);
 void PrintTimeTick(void);
 
@@ -960,6 +990,7 @@ static void FinishBootEffect(void* _this)
     if (!once)
     {
         PrintTimeTick();
+        DexcoreBrandSystemInformation();
         once = true;
     }
     FinishBootEffect_original.ptr(_this);
