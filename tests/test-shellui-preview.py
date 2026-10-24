@@ -23,10 +23,18 @@ class NativeShellUIMenuTests(unittest.TestCase):
         root = ET.fromstring(edited)
         nodes = builder.index_ids(root)
         assert nodes["id_hen_settings"].get("title") == "★ DEXCore v1"
+        assert nodes["id_hen_settings"].get("initial_focus_to") == "hncy_ftp"
+        assert nodes["hncy_ftp"].get("title") == "FTP Server"
+        assert nodes["hncy_tools"].get("title") == "Plugins"
+        assert nodes["hncy_system"].get("title") == "System"
+        assert nodes["payload_options"] in list(nodes["hncy_system"])
+        assert nodes["enable_plugins"] in list(nodes["payload_options"])
+        assert nodes["exploit_fixes"] in list(nodes["payload_options"])
+        assert nodes["ftp_status"].tag == "message"
         assert nodes["payload_options"].get("initial_focus_to") == "enable_plugins"
-        assert "FTP Server" in nodes["payload_options"].get("title")
+        assert "System" in nodes["payload_options"].get("title")
         switch = nodes["enable_plugins"]
-        assert switch.tag == "toggle_switch" and "FTP Server" in switch.get("title")
+        assert switch.tag == "toggle_switch" and "Plugin" in switch.get("title")
         assert switch.get("value") == "0" # actual runtime state comes from HEN INI
         assert sum(node.get("id") == "enable_plugins" for node in root.iter()) == 1
 
@@ -41,24 +49,25 @@ class NativeShellUIMenuTests(unittest.TestCase):
         at = original.find(builder.TOP_LINK_OLD, 0x29C80, builder.XML_START)
         self.assertGreater(at, 0x29C80)
         self.assertEqual(new[at:at+len(builder.TOP_LINK_OLD)], builder.TOP_LINK_NEW)
-        self.assertEqual(original[:at], new[:at])
-        self.assertEqual(original[at+len(builder.TOP_LINK_OLD):builder.XML_START],
-                         new[at+len(builder.TOP_LINK_OLD):builder.XML_START])
+        self.assertEqual(original[at:at+len(builder.TOP_LINK_OLD)], builder.TOP_LINK_OLD)
         self.assertNotIn(builder.TOP_LINK_OLD, new[0x29C80:builder.XML_START])
         end = builder.XML_START + builder.XML_SLOT
         old_suffix = builder.OLD_SUFFIX
         offset = original.find(old_suffix, *builder.BRAND_REGION)
         self.assertGreater(offset, end)
-        self.assertEqual(original[end:offset], new[end:offset])
+        # Other verified notification literals are intentionally rebranded.
         self.assertEqual(new[offset:offset + len(old_suffix)],
                          builder.NEW_SUFFIX.ljust(len(old_suffix), b"\x00"))
-        self.assertEqual(original[offset+len(old_suffix):], new[offset+len(old_suffix):])
+        for name, address, before, after in builder.NOTIFICATION_PATCHES:
+            self.assertEqual(original[address:address+len(before)], before, name)
+            self.assertEqual(new[address:address+len(before)], after.ljust(len(before), b"\x00"), name)
         self.assertIn(b'DEXCore v1', new[builder.XML_START:end])
         self.assertIn(b'FTP Server', new[builder.XML_START:end])
         self.assertIn(b'enable_plugins', new[builder.XML_START:end])
         self.assertIn(b'hncy_tools', new[builder.XML_START:end])
         self.assertIn(b'hncy_packages', new[builder.XML_START:end])
         self.assertIn(b'hncy_system', new[builder.XML_START:end])
+        self.assertNotIn(b'HNCY', new[builder.XML_START:end])
         self.assertNotEqual(original, new)
         self.assertEqual(hashlib.sha256(original).hexdigest(), builder.BASE_SHA256)
 

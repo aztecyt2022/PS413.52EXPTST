@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build a TEST-ONLY DEXCore PS4 ShellUI menu payload from editable native XML.
 
-Only the verified fixed-size native XML and an exactly matched System Information
-version suffix are edited. No firmware data, executable code, or icon is changed.
+Only verified static strings, the XML menu, and the System Information suffix change.
+No firmware bytes, executable code, runtime control paths or icon is changed.
 """
 import argparse
 import hashlib
@@ -27,6 +27,20 @@ TOP_LINK_OLD = ('\t\t<link id="hen_settings" title="★ HNCY" file="hen_settings
 TOP_LINK_NEW = ('<link id="hen_settings" title="DEXCore v1" file="hen_settings.xml" '
                 'icon="file:///data/hen/shellui_data/icons/hen_settings_icon.png" />\r\n').encode("utf-8")
 assert len(TOP_LINK_NEW) == len(TOP_LINK_OLD)
+
+# Guarded length-preserving native notification edits. Verified ftpsrv build ID.
+NOTIFICATION_PATCHES = (
+    ("installer_version", 0xA6AA, b"HENACY v1", b"DEXCore"),
+    ("already_installed", 0xA7D5, b"HENACY already installed. Skipping...", b"DEXCore already loaded. Skipping..."),
+    ("restart_notice", 0xAA2D, b"HNCY restarting %s\nin %d seconds...", b"DEXCore restart %s\nin %d seconds..."),
+    ("shellui_version", 0x376E4, b"HNCY Version: %s", b"DEXCore: %s"),
+    ("topmenu_label", 0x37C56, "★ HNCY".encode("utf-8"), b"DEXCore"),
+    ("info_version", 0x39BA4, b"HENACY v1", b"DEXCore"),
+    ("info_log", 0x39C0D, b"[HNCY] System Information version: %s; logo hook: %s\n", b"[DEXCore] System Information: %s; logo: %s\n"),
+    ("ftp_start_notice", 0x53250, b"Serving FTP\non %s:%d (%s)\nCompiled on %s %s\n", b"DEXCore FTP (ftpsrv a717ffd)\n%s:%d (%s)\n"),
+)
+FTP_BUILD_REVISION = b"a717ffd0b4699"
+
 
 CONFIG_IDS = {"exploit_fixes", "mmap_patches", "block_updates", "disable_aslr",
               "nobd_patches", "target_id", "skip_patches", "upload_prx", "enable_plugins"}
@@ -67,8 +81,8 @@ def validate_xml(old_xml, new_xml):
     for key in ("hncy_tools", "hncy_packages", "hncy_system"):
         if key not in current or current[key].tag != "setting_list":
             raise ValueError("Missing native HENACY submenu: " + key)
-    if current["id_hen_settings"].get("initial_focus_to") != "payload_options":
-        raise ValueError("HENACY initial focus is not connected")
+    if current["id_hen_settings"].get("initial_focus_to") != "hncy_ftp":
+        raise ValueError("DEXCore initial focus is not connected")
 
 
 def build(base_path, menu_path, output_path):
@@ -111,11 +125,27 @@ def build(base_path, menu_path, output_path):
     if not 0x29C80 < outer_at < XML_START - len(TOP_LINK_OLD):
         raise ValueError("Outer Settings link is outside the plugin PRX")
     candidate[outer_at:outer_at + len(TOP_LINK_OLD)] = TOP_LINK_NEW
-    # Preserve every byte outside the two approved, non-overlapping ranges.
-    assert candidate[:outer_at] == base[:outer_at]
-    assert candidate[outer_at + len(TOP_LINK_OLD):XML_START] == base[outer_at + len(TOP_LINK_OLD):XML_START]
-    assert candidate[end:offset] == base[end:offset]
-    assert candidate[offset + len(OLD_SUFFIX):] == base[offset + len(OLD_SUFFIX):]
+    # No executable bytes, firmware offsets or other native resources may change.
+    if base.count(FTP_BUILD_REVISION) != 1 or base.find(FTP_BUILD_REVISION, 0x4C000, 0x59000) < 0:
+        raise ValueError("Unverified embedded FTP source revision")
+    allowed = [(XML_START, end), (offset, offset + len(OLD_SUFFIX)),
+               (outer_at, outer_at + len(TOP_LINK_OLD))]
+    for label, at, before, after in NOTIFICATION_PATCHES:
+        if len(after) > len(before) or base[at:at+len(before)] != before or base[at+len(before)] != 0:
+            raise ValueError("Native notification mismatch: " + label)
+        if XML_START <= at < end:
+            raise ValueError("Native notification overlaps embedded XML: " + label)
+        candidate[at:at+len(before)] = after.ljust(len(before), b"\x00")
+        allowed.append((at, at+len(before)))
+    allowed.sort()
+    for (_, hi), (next_lo, _) in zip(allowed, allowed[1:]):
+        if hi > next_lo:
+            raise ValueError("Overlapping native data patches")
+    cursor = 0
+    for lo, hi in allowed:
+        assert candidate[cursor:lo] == base[cursor:lo], "Unapproved executable/native modification"
+        cursor = hi
+    assert candidate[cursor:] == base[cursor:], "Unapproved tail modification"
     assert len(candidate) == len(base)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_bytes(candidate)
@@ -125,6 +155,7 @@ def build(base_path, menu_path, output_path):
     print("Original web payload, all firmware/kernel bytes, and icon unchanged.")
     print("Native version suffix patched at:", hex(offset))
     print("Outer PS4 Settings title patched at:", hex(outer_at))
+    print("Native notification fixes:", len(NOTIFICATION_PATCHES))
     print("PS4 13.52 hardware test: NOT YET VERIFIED")
 
 
