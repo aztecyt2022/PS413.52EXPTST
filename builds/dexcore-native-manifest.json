@@ -2,8 +2,8 @@
   "product": "DEXCORE",
   "version": "1.1",
   "fw_target": "13.52",
-  "build_variant": "TEST 2",
-  "build": "full installer recompiled from Scene-Collective PS4-HEN (not fixed-slot patch)",
+  "build_variant": "BIN 01",
+  "build": "In-place BIN-only panel/text patch of the full TEST 2 installer; existing startup, sampler and render hook retained",
   "tested_on_hardware": false,
   "native_ftp_port": 2121,
   "ftp_disabled_on_first_install": true,
@@ -23,11 +23,14 @@
     "ui_scene_check_interval_ms": 250,
     "off_removes_panels_and_stops_sampling": true,
     "enabled_state_persists": true,
-    "console_verified": false
+    "console_verified": false,
+    "cpu_gpu_reading": "Existing CPU/APU temperature reading, labelled CPU/GPU; no independent GPU sensor added",
+    "fan_reading": "Fan duty percentage; not RPM",
+    "bin_patch": "Concrete Panel/Label property lookup, explicit text visibility and panel drawing order"
   },
   "payload": {
     "bytes": 551968,
-    "sha256": "8b6788f165058c2e6a6219907f4b0de4fa373c3f09025f98f3f0cd56eb233553"
+    "sha256": "7cc220c6568899f15e11a190fb9ebbe85b6acb7a343115e3ac7f379e8385a3be"
   },
   "embedded_prxs": {
     "plugin_bootloader": {
@@ -42,7 +45,7 @@
     },
     "plugin_mono": {
       "bytes": 175424,
-      "sha256": "9dfbbc83f5de356d992d04f01c4e6bde9946277890b03bca1e8ffbd7397c968b",
+      "sha256": "389a42db900580e9f604cf55b04247d9fd74651d525770cd816cae8877a0599d",
       "offset": 171168
     },
     "plugin_server": {
@@ -55,5 +58,14 @@
       "sha256": "58a1640f68f48861c0a77b01c6a1717518cc1e43223d5342840002ec1f9eca2e",
       "offset": 82880
     }
+  },
+  "bin_only_patch": {
+    "base_build_variant": "TEST 2",
+    "base_payload_sha256": "8b6788f165058c2e6a6219907f4b0de4fa373c3f09025f98f3f0cd56eb233553",
+    "changed_bytes": 155,
+    "payload_size_preserved": true,
+    "native_startup_changed": false,
+    "desktop_execution_checks_passed": true,
+    "hardware_verified": false
   }
 }
