@@ -26,7 +26,7 @@ class NativeShellUIMenuTests(unittest.TestCase):
         assert nodes["payload_options"].get("initial_focus_to") == "enable_plugins"
         assert "FTP Server" in nodes["payload_options"].get("title")
         switch = nodes["enable_plugins"]
-        assert switch.tag == "toggle_switch" and "FTP Server" in switch.get("title")
+        assert switch.tag == "toggle_switch" and "Plugins" in switch.get("title")
         assert switch.get("value") == "0" # actual runtime state comes from HEN INI
         assert sum(node.get("id") == "enable_plugins" for node in root.iter()) == 1
 
