@@ -114,8 +114,8 @@ assert(!read('index.html').includes('ftp-payload.js'));
 assert(!read('app.js').includes('DEXCORE_FTP'));
 assert(!read('loader/jb.js').includes('FTP_MODE'));
 assert(!read('loader/diagnostics.html').includes('DEXCORE_FTP'));
-assert.match(read('loader/jb.js'),/payloadVerified\\(payloadBlob\\)/);
-assert.match(read('loader/jb.js'),/payloadVerified\\(blob\\)/);
+assert.match(read('loader/jb.js'),/payloadVerified\(payloadBlob\)/);
+assert.match(read('loader/jb.js'),/payloadVerified\(blob\)/);
 console.log('PASS: browser only exposes the DEXCORE exploit loader; standalone FTP path is retired.');
 
 const guestLoader=environment(ps4('13.52'));guestLoader.loadEntry();assert.deepEqual(guestLoader.navigation,['../index.html']);assert.equal(guestLoader.modules.length,0);
