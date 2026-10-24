@@ -13,10 +13,3 @@ ${CXX:-clang++} -std=c++17 -O1 -Wall -Wextra -Werror -Wno-unused-function \
   -Wno-unused-variable -Wno-missing-field-initializers -fno-exceptions -fno-rtti \
   -pthread -Itests tests/overlay_ui_test.cc -o "$test_dir/ui"
 "$test_dir/ui"
-cc -std=gnu11 -O2 -Wall -Wextra -Werror -pthread -Iplugin_mono/source \
-  plugin_mono/source/mono_bootstrap.c tests/mono_bootstrap_test.c -o "$test_dir/bootstrap"
-"$test_dir/bootstrap"
-cc -std=gnu11 -O2 -Wall -Wextra -Werror -DDEXCORE_HOOK_TEST -Itests -Iplugin_mono/source \
-  plugin_mono/source/overlay_hook.c plugin_mono/source/overlay_hook_native.c \
-  tests/vendor/hde64/HDE64.c tests/overlay_hook_test.c -o "$test_dir/hook"
-"$test_dir/hook"

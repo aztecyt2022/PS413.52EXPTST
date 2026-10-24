@@ -1,19 +1,12 @@
-name: Rebuild DEXCORE 1.1 native FTP HEN payload
+name: Build DEXCORE native HEN candidate (manual, no deployment)
 
+# Build candidates only. A passing native build does not verify ShellUI on a PS4.
+# Publishing requires a separate reviewed change after a console test.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'native/ftp-control/**'
-      - 'scripts/prepare-full-hen.py'
-      - 'scripts/verify-full-hen.py'
-      - 'scripts/promote-full-hen.py'
-      - '.github/workflows/rebuild-full-hen.yml'
-      - 'assets/hen_settings_icon.png'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   full-hen-payload:
@@ -69,7 +62,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Promote verified full HEN payload to web loader metadata
+      - name: Validate candidate with matching loader metadata in CI workspace
         run: |
           python3 scripts/promote-full-hen.py
           npm test
@@ -80,18 +73,6 @@ jobs:
           test ! -e dist/loader/user-ftp.bin
           test ! -e dist/ftp-payload.js
           test ! -e dist/tools/ftp-control.py
-      - name: Commit the checked HEN payload and exact web checksum
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add loader/dexcore.bin payloads.js builds/dexcore-native-manifest.json
-          if git diff --staged --quiet; then
-            echo "Full DEXCORE payload and hash already current"
-          else
-            git commit -m "Deploy DEXCORE 1.1 TEST 3 native system overlay payload"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
       - name: Upload rebuilt payload (unverified on actual PS4)
         uses: actions/upload-artifact@v4
         with:

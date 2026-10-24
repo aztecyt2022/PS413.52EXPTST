@@ -37,13 +37,10 @@ assert 'dexcore_overlay_start()' in mono
 assert 'dexcore_overlay_ui_install()' in mono
 press=settings[settings.index('static void NewOnPress('):settings.index('static void NewOnPreCreate(')]
 precreate=settings[settings.index('static void NewOnPreCreate('):settings.index('static void NewOnPageActivating(')]
-assert 'dexcore_overlay_ui_queue_toggle(element)' in press
-assert press.index('OnPress_Original.ptr(p1,element,p3)') < press.index('dexcore_overlay_ui_queue_toggle(element)')
-assert 'mono_object_get_class(element)' in press and 'mono_object_get_class(element)' in precreate
+assert 'DexcoreInfoSetEnabled' in press
 assert 'DexcoreInfoDisplayRow(settings,element,Id)' in precreate
 assert 'DexcoreInfoDisplayRow(settings,element,Id)' not in press
-ui=(root/'plugin_mono/source/system_overlay_ui.cc').read_text()
-assert 'dexcore_overlay_set_enabled' in ui
+assert 'dexcore_overlay_set_enabled' in settings
 assert 'system_info_enabled' in nodes and 'network_servers' in nodes
 assert 'persistent native overlay' in nodes['system_info_enabled'].get('description')
 print('PASS: persistent native overlay sampler, renderer initialization and Settings callback routing are wired')

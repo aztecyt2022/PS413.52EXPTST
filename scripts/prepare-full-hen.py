@@ -31,7 +31,7 @@ main.write_text(source)
 header=version.read_text()
 before='#define VERSION "2.2.0 BETA"'
 assert header.count(before)==1
-header=header.replace(before,'#define VERSION "1.1 TEST 3"')
+header=header.replace(before,'#define VERSION "1.1 TEST 2"')
 assert '#define MAX_FW 1400' in header and '#define MIN_FW 474' in header
 version.write_text(header)
 # The native 13.52 offsets are required; never invent kernel addresses.

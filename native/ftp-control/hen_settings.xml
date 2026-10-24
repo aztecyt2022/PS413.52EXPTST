@@ -63,7 +63,7 @@
         <message id="system_info_soc" title="SoC Sensor: Unavailable" description="Internal SoC temperature, when supported."/>
         <message id="system_info_fan" title="Fan Duty: Unavailable" description="Reported fan duty cycle; percentage, not RPM."/>
         <message id="system_info_ram" title="RAM Used: Unavailable" description="Estimated utilization from physical RAM and free pages."/>
-        <message id="system_info_note" title="Overlay: runtime not attached (TEST 3)" description="The native runtime replaces this line with its actual renderer status."/>
+        <message id="system_info_note" title="Overlay: live readings every second" description="The on-screen panel stays visible after leaving Settings. Off removes it immediately."/>
       </setting_list>
       <button id="id_restart_shellui" title="Restart ShellUI" description="Restarts ShellUI."/>
     </setting_list>

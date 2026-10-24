@@ -22,7 +22,6 @@ extern "C"
 #include <time.h>
 #include "../system_metrics.h"
 #include "../system_overlay.h"
-#include "../overlay_hook.h"
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 
@@ -514,6 +513,10 @@ static bool DexcoreInfoEnabled(void)
 {
     return dexcore_overlay_enabled()!=0;
 }
+static bool DexcoreInfoSetEnabled(bool enabled)
+{
+    return dexcore_overlay_set_enabled(enabled)!=0;
+}
 static bool DexcoreInfoMetricId(const char* id)
 {
     if(!id)return false;
@@ -537,7 +540,7 @@ extern "C" int kill(int, int);
 
 static void NewOnPress(const void* p1, const void* element, const void* p3)
 {
-    const void* settings = mono_object_get_class(element);
+    const void* settings = Mono_Get_Class(App_Exe, "Sce.Vsh.ShellUI.Settings.Core", "SettingElement");
     const char* Id = mono_string_to_utf8(Mono_Get_Property(settings, element, "Id"));
     const char* Value = mono_string_to_utf8(Mono_Get_Property(settings, element, "Value"));
     MonoObject* Type = (MonoObject*)Mono_Get_Property(settings, element, "Type");
@@ -563,12 +566,15 @@ static void NewOnPress(const void* p1, const void* element, const void* p3)
                               Mono_New_String(DexcoreNetworkReadState(Id) ? "1" : "0"));
         }
     }
-    if (Type->value.u32 == ToggleSwitch && Id && strcmp(Id,"system_info_enabled")==0)
+    if (Type->value.u32 == ToggleSwitch &&
+        g_PageID == wSID(L"system_information") && strcmp(Id,"system_info_enabled")==0)
     {
-        OnPress_Original.ptr(p1,element,p3);
-        dexcore_overlay_ui_queue_toggle(element);
-        mono_free(Id);mono_free(Value);
-        return;
+        if(!DexcoreInfoSetEnabled(Value && Value[0]=='1'))
+        {
+            Notify(TEX_ICON_SYSTEM,"DEXCORE System Information: failed to save state");
+            Mono_Set_Property(settings,element,"Value",
+                              Mono_New_String(DexcoreInfoEnabled()?"1":"0"));
+        }
     }
     if (IsValidElementType(Type))
     {
@@ -616,10 +622,31 @@ static void NewOnPress(const void* p1, const void* element, const void* p3)
 static void NewOnPreCreate(void* p1, const void* element, void* p3)
 {
     char buf[128] = {};
-    const void* settings = mono_object_get_class(element);
+    const void* settings = Mono_Get_Class(App_Exe, "Sce.Vsh.ShellUI.Settings.Core", "SettingElement");
     const char* Id = mono_string_to_utf8(Mono_Get_Property(settings, element, "Id"));
     const char* Value = mono_string_to_utf8(Mono_Get_Property(settings, element, "Value"));
     MonoObject* Type = (MonoObject*)Mono_Get_Property(settings, element, "Type");
+    if (Id && !strncmp(Id,"system_info_",12))
+    {
+        if (Type->value.u32 == ToggleSwitch &&
+            strcmp(Id,"system_info_enabled")==0)
+        {
+            Mono_Set_Property(settings,element,"Value",
+                              Mono_New_String(DexcoreInfoEnabled()?"1":"0"));
+        }
+        else if(DexcoreInfoMetricId(Id))
+        {
+            DexcoreInfoDisplayRow(settings,element,Id);
+        }
+        else if(!strcmp(Id,"system_info_note"))
+        {
+            bool show=DexcoreInfoEnabled();
+            Mono_Set_Property(settings,element,"Visible",&show);
+            char note[160];
+            snprintf(note,sizeof(note),"Overlay: %s",dexcore_overlay_ui_status());
+            Mono_Set_Property(settings,element,"Title",Mono_New_String(note));
+        }
+    }
     if (Type->value.u32 == ToggleSwitch &&
         g_PageID == wSID(L"ftp_server") && strcmp(Id, "ftp_enabled") == 0)
     {
@@ -689,27 +716,6 @@ static void NewOnPreCreate(void* p1, const void* element, void* p3)
         }
     }
     OnPreCreate_Original.ptr(p1, element, p3);
-    if (Id && !strncmp(Id,"system_info_",12))
-    {
-        if (strcmp(Id,"system_info_enabled")==0)
-        {
-            Mono_Set_Property(settings,element,"Value",
-                              Mono_New_String(DexcoreInfoEnabled()?"1":"0"));
-        }
-        else if(DexcoreInfoMetricId(Id))
-        {
-            DexcoreInfoDisplayRow(settings,element,Id);
-        }
-        else if(!strcmp(Id,"system_info_note"))
-        {
-            bool show=true;
-            Mono_Set_Property(settings,element,"Visible",&show);
-            char note[160];
-            snprintf(note,sizeof(note),"Overlay: %s",dexcore_overlay_ui_status());
-            Mono_Set_Property(settings,element,"Title",Mono_New_String(note));
-        }
-    }
-
 }
 
 static void NewOnPageActivating(void* p1, const void* element, MonoObject* p3)
@@ -958,28 +964,28 @@ static MonoString* NewTopMenuPluginGetString(MonoString* msg, void* msglist)
     return TopMenuPluginGetString_Original.ptr(msg, msglist);
 }
 
-static unsigned g_DexcoreSettingsHooks;
-static bool g_DexcoreOtherBranches;
-int DexcoreSettingsHooksReady(void)
-{
-    return (__atomic_load_n(&g_DexcoreSettingsHooks,__ATOMIC_ACQUIRE)&3)==3;
-}
 void UploadOnBranch(void* app_exe)
 {
-    if(!(g_DexcoreSettingsHooks&1)) {
-        uintptr_t address=(uintptr_t)Mono_Get_Address_of_Method(app_exe,"Sce.Vsh.ShellUI.Settings.SettingsRoot","SettingsRootHandler","OnPress",2);
-        if(address && dexcore_overlay_hook_install(address,(uintptr_t)NewOnPress,&OnPress_Original.addr))
-            __atomic_fetch_or(&g_DexcoreSettingsHooks,1,__ATOMIC_RELEASE);
+    const uintptr_t OnPress = (uintptr_t)Mono_Get_Address_of_Method(app_exe, "Sce.Vsh.ShellUI.Settings.SettingsRoot", "SettingsRootHandler", "OnPress", 2);
+    if (OnPress)
+    {
+        const uintptr_t pHook = CreatePrologueHook(OnPress, 15);
+        if (pHook)
+        {
+            OnPress_Original.addr = pHook;
+            WriteJump64(OnPress, (uintptr_t)NewOnPress);
+        }
     }
-    if(!(g_DexcoreSettingsHooks&2)) {
-        uintptr_t address=(uintptr_t)Mono_Get_Address_of_Method(app_exe,"Sce.Vsh.ShellUI.Settings.SettingsRoot","SettingsRootHandler","OnPreCreate",2);
-        if(address && dexcore_overlay_hook_install(address,(uintptr_t)NewOnPreCreate,&OnPreCreate_Original.addr))
-            __atomic_fetch_or(&g_DexcoreSettingsHooks,2,__ATOMIC_RELEASE);
+    const uintptr_t OnPreCreate = (uintptr_t)Mono_Get_Address_of_Method(app_exe, "Sce.Vsh.ShellUI.Settings.SettingsRoot", "SettingsRootHandler", "OnPreCreate", 2);
+    if (OnPreCreate)
+    {
+        const uintptr_t pHook = CreatePrologueHook(OnPreCreate, 15);
+        if (pHook)
+        {
+            OnPreCreate_Original.addr = pHook;
+            WriteJump64(OnPreCreate, (uintptr_t)NewOnPreCreate);
+        }
     }
-    /* The remaining legacy branches are installed once, even if the two
-     * overlay/Settings hooks need another startup attempt. */
-    if(g_DexcoreOtherBranches)return;
-    g_DexcoreOtherBranches=true;
     const uintptr_t OnPageActivating = (uintptr_t)Mono_Get_Address_of_Method(app_exe, "Sce.Vsh.ShellUI.Settings.SettingsRoot", "SettingsRootHandler", "OnPageActivating", 2);
     if (OnPageActivating)
     {

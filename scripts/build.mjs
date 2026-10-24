@@ -5,4 +5,6 @@ for(const name of ['index.html','style.css','sha256.js','config.js','auth.js','d
 await cp('loader','dist/loader',{recursive:true});
 await rm('dist/loader/user-ftp.bin',{force:true});
 await cp('assets','dist/assets',{recursive:true});
+await cp('recovery','dist/recovery',{recursive:true});
+await cp('builds','dist/builds',{recursive:true});
 console.log('Built static GitHub Pages files in dist/');
