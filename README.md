@@ -20,5 +20,5 @@ DEXCore includes the **exact unmodified** uploaded `ps4-ftp(3).bin`, SHA-256 `b4
 
 The site adds an explicit **Launch uploaded FTP (1337)** action. It validates the uploaded binary's SHA-256 before navigating into the existing PS4 payload runner. The runner verifies again before mapping/executing. It can use the existing jailbroken-kernel shortcut; this is **not** an automatic startup service and **not** a native ShellUI toggle. Keep the PS4 browser open while using this FTP payload. Physical PS4 13.52 support is not yet proven for the submitted file.
 
-**Existing bundled FTP caveat:** The original HEN plugin-server FTP code remains part of the HEN package and may still auto-start on **2121** while plugins are enabled. Simply swapping a standalone `.bin` for a `.prx` would crash; full native server replacement and a PS4 Settings runtime toggle need a compatible plugin/server integration. Do not assume uploading the binary removes the old FTP listener.
+**Existing installed-plugin caveat:** The new DEXCore payload disables the old FTP autostart when its freshly installed `plugin_server.prx` is loaded. An old `plugin_server.prx` already on PS4 storage may still start its original **2121** FTP listener. Reinstall/refresh HEN plugin PRXs and reboot before testing, keeping backups. Do not overwrite a `.prx` with the standalone `.bin`.
 

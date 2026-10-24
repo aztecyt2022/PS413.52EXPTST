@@ -2,7 +2,7 @@
 """Build a TEST-ONLY DEXCore PS4 ShellUI menu payload from editable native XML.
 
 Only verified static strings, the XML menu, and the System Information suffix change.
-No firmware bytes, executable code, runtime control paths or icon is changed.
+The only executable edit is an exact five-byte NOP of the legacy FTP thread creation. No firmware/kernel bytes, kernel log startup, or icon is changed.
 """
 import argparse
 import hashlib
@@ -39,6 +39,18 @@ NOTIFICATION_PATCHES = (
     ("info_log", 0x39C0D, b"[HNCY] System Information version: %s; logo hook: %s\n", b"[DEXCore] System Information: %s; logo: %s\n"),
 )
 FTP_BUILD_REVISION = b"a717ffd0b4699"
+
+# In the original bundled plugin_server's plugin_load routine, the first
+# pthread_create starts kernel logging; the SECOND starts the old FTP.
+# Disable only that call. User-supplied FTPS4 is launched separately by the
+# verified web payload runner on demand. Do not touch kernel logging.
+BUILTIN_FTP_CREATE_AT = 0x50155
+BUILTIN_FTP_CREATE_ORIGINAL = bytes.fromhex("e836180000")
+BUILTIN_FTP_CREATE_DISABLED = b"\x90" * 5
+BUILTIN_FTP_FUNCTION_AT = 0x4FE60
+BUILTIN_FTP_LEA_AT = 0x5014B
+BUILTIN_KLOG_CREATE_AT = 0x5013E
+
 
 
 CONFIG_IDS = {"exploit_fixes", "mmap_patches", "block_updates", "disable_aslr",
@@ -131,6 +143,18 @@ def build(base_path, menu_path, output_path):
     # No executable bytes, firmware offsets or other native resources may change.
     allowed = [(XML_START, end), (offset, offset + len(OLD_SUFFIX)),
                (outer_at, outer_at + len(TOP_LINK_OLD))]
+    # Existing plugin_server compiled thread creation:
+    #   pthread_create(klog); pthread_create(ftp); while(1) sleep(60);
+    # NOP only the second pthread_create. The original immutable payload
+    # checksum, function-entry, FTP function pointer LEA and klog call
+    # must all agree with the audited bytes before editing code.
+    if (base[BUILTIN_KLOG_CREATE_AT:BUILTIN_KLOG_CREATE_AT + 5] != bytes.fromhex("e84d180000")
+        or base[BUILTIN_FTP_LEA_AT:BUILTIN_FTP_LEA_AT + 7] != bytes.fromhex("488d150efdffff")
+        or base[BUILTIN_FTP_FUNCTION_AT:BUILTIN_FTP_FUNCTION_AT + 4] != bytes.fromhex("554889e5")
+        or base[BUILTIN_FTP_CREATE_AT:BUILTIN_FTP_CREATE_AT + 5] != BUILTIN_FTP_CREATE_ORIGINAL):
+        raise ValueError("Unrecognized HEN plugin_server FTP thread invocation")
+    candidate[BUILTIN_FTP_CREATE_AT:BUILTIN_FTP_CREATE_AT + 5] = BUILTIN_FTP_CREATE_DISABLED
+    allowed.append((BUILTIN_FTP_CREATE_AT, BUILTIN_FTP_CREATE_AT + 5))
     for label, at, before, after in NOTIFICATION_PATCHES:
         if len(after) > len(before) or base[at:at+len(before)] != before or base[at+len(before)] != 0:
             raise ValueError("Native notification mismatch: " + label)
@@ -157,6 +181,7 @@ def build(base_path, menu_path, output_path):
     print("Native version suffix patched at:", hex(offset))
     print("Outer PS4 Settings title patched at:", hex(outer_at))
     print("Native notification fixes:", len(NOTIFICATION_PATCHES))
+    print("Builtin plugin_server FTP autostart disabled; klog creation unchanged at:", hex(BUILTIN_KLOG_CREATE_AT))
     print("PS4 13.52 hardware test: NOT YET VERIFIED")
 
 

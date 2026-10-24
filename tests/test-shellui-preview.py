@@ -60,7 +60,12 @@ class NativeShellUIMenuTests(unittest.TestCase):
         self.assertIn(b'hncy_packages', new[builder.XML_START:end])
         self.assertIn(b'hncy_system', new[builder.XML_START:end])
         self.assertNotIn(b'HNCY', new[builder.XML_START:end])
-        self.assertNotEqual(original, new)
+        call=builder.BUILTIN_FTP_CREATE_AT
+        self.assertEqual(original[call:call + 5],builder.BUILTIN_FTP_CREATE_ORIGINAL)
+        self.assertEqual(new[call:call + 5],builder.BUILTIN_FTP_CREATE_DISABLED)
+        self.assertEqual(original[builder.BUILTIN_KLOG_CREATE_AT:builder.BUILTIN_KLOG_CREATE_AT+5],
+                         new[builder.BUILTIN_KLOG_CREATE_AT:builder.BUILTIN_KLOG_CREATE_AT+5])
+        self.assertNotEqual(original,new)
         self.assertEqual(hashlib.sha256(original).hexdigest(), builder.BASE_SHA256)
 
     def test_rejects_unrecognized_payload(self):

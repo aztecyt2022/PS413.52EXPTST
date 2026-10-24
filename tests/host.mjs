@@ -63,6 +63,10 @@ if(promoted){
   const dexcore=Buffer.from(bytes('loader/dexcore.bin'));
   assert.equal(dexcore.length,500448);
   assert(dexcore.includes(Buffer.from('DEXCore v1')));
+  if(dexcore.includes(Buffer.from('User FTPS4 / TCP 1337'))){
+    assert.deepEqual([...dexcore.subarray(0x50155,0x5015a)],[144,144,144,144,144]);
+    assert.deepEqual([...dexcore.subarray(0x5013e,0x50143)],[232,77,24,0,0]);
+  }
   assert(dexcore.includes(Buffer.from('FTP Server')));
   if(dexcore.includes(Buffer.from('ftpsrv a717ffd'))){
     assert(dexcore.includes(Buffer.from('DEXCore already loaded. Skipping...')));
