@@ -57,6 +57,30 @@ window.startHENHost=function () {
     autoButton.textContent="Disable auto loading";
     tick();timer=setInterval(tick,250);
   }
+  var ftpButton=document.getElementById("loadUserFtp");
+  if(ftpButton){
+    ftpButton.addEventListener("click",function(){
+      if(!supported||busy)return;
+      if(!window.HEN_AUTH.allowed()){
+        statusText.textContent="Sign in again before loading the FTP payload.";
+        return;
+      }
+      var ftp=window.DEXCORE_FTP;
+      if(!ftp){statusText.textContent="Uploaded FTP metadata unavailable.";return;}
+      // No server is started until the user explicitly requests this action.
+      stopTimer();autoEnabled=false;busy=true;
+      loadButton.disabled=true;autoButton.disabled=true;ftpButton.disabled=true;
+      statusText.textContent="Verifying uploaded FTP payload (port 1337)…";
+      fileCheck([ftp.url,ftp.size,ftp.sha256]).then(function(){
+        statusText.textContent="Opening FTP payload loader…";
+        window.location.assign("loader/jb.html?ftp=1&v=dexcore-userftp-1");
+      }).catch(function(error){
+        busy=false;
+        loadButton.disabled=!supported;autoButton.disabled=!supported;ftpButton.disabled=!supported;
+        statusText.textContent=error.message+" FTP launch cancelled.";
+      });
+    });
+  }
   loadButton.addEventListener("click",launch);
   autoButton.addEventListener("click",function(){
     if(!supported||busy)return;
@@ -65,11 +89,12 @@ window.startHENHost=function () {
   });
   if(!supported){
     loadButton.disabled=true;autoButton.disabled=true;
+    if(ftpButton)ftpButton.disabled=true;
     autoButton.textContent="Auto loading disabled";
     statusText.textContent="Disabled. Only a PS4 running firmware 13.52 is supported.";
     return;
   }
-  loadButton.disabled=false;autoButton.disabled=false;
+  loadButton.disabled=false;autoButton.disabled=false;if(ftpButton)ftpButton.disabled=false;
   var disabled=false;try{disabled=localStorage.getItem(preferenceKey)==="1";}catch(_){}
   if(disabled){autoButton.textContent="Enable auto loading";statusText.textContent="Auto loading disabled. Use Load exploit when ready.";}
   else startAuto();

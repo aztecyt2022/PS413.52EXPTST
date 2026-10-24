@@ -47,7 +47,7 @@ function finishUI(ok) {
   const m = document.getElementById("msg");
   if (m)
     m.textContent = ok
-      ? "DEXCore payload started"
+      ? (params.get("ftp") === "1" ? "Uploaded FTP payload thread started — check PS4 IP, port 1337" : "DEXCore payload started")
       : armedEver
         ? "Restart your console"
         : "Exploit did not complete — see diagnostic log below";
@@ -183,7 +183,22 @@ let allDone = false,
 
     const KPATCH_FILE =
       "patches/" + (off.kpatch || fwKey.replace(".", "") + ".bin");
-    const PAYLOAD_FILE = window.HEN_BUILD.payload[0];
+    const FTP_MODE = params.get("ftp") === "1";
+    const payloadSpec = FTP_MODE ? window.DEXCORE_FTP : null;
+    if (FTP_MODE && (!payloadSpec || payloadSpec.sha256 !== "b4b984524ac63508255175c76bdf942ebfbd577234337bfd91e2712e27738560" ||
+       payloadSpec.size !== 29052 || payloadSpec.port !== 1337)) {
+      mark("FTP-REFUSED", "Uploaded FTP metadata did not initialize correctly.");
+      return;
+    }
+    const PAYLOAD_FILE = FTP_MODE ? payloadSpec.filename : window.HEN_BUILD.payload[0];
+    const EXPECTED_PAYLOAD_SHA = FTP_MODE ? payloadSpec.sha256 : window.HEN_BUILD.payload[2];
+    const EXPECTED_PAYLOAD_SIZE = FTP_MODE ? payloadSpec.size : window.HEN_BUILD.payload[1];
+    function payloadVerified(blob) {
+      return !!blob && blob[0] === 0xe9 &&
+        blob.length === EXPECTED_PAYLOAD_SIZE &&
+        typeof window.HEN_SHA256 === "function" &&
+        window.HEN_SHA256(blob) === EXPECTED_PAYLOAD_SHA;
+    }
     const needPatch = ["k_sysent_661", "k_jmp_rsi"].filter(
       (k) => off[k] === undefined,
     );
@@ -530,8 +545,8 @@ let allDone = false,
         const r = await fetch(PAYLOAD_FILE);
         if (r.ok) blob = new Uint8Array(await r.arrayBuffer());
       } catch (e) {}
-      if (!blob || blob[0] !== 0xe9) {
-        mark("JB-RELAUNCH", "file=" + PAYLOAD_FILE + " blob=unusable");
+      if (!payloadVerified(blob)) {
+        mark("JB-RELAUNCH", "file=" + PAYLOAD_FILE + " blob=unverified or invalid");
         return;
       }
       const sz = (blob.length + 0x3fff) & ~0x3fff;
@@ -3009,6 +3024,10 @@ let allDone = false,
                 if (r.ok) payloadBlob = new Uint8Array(await r.arrayBuffer());
               } catch (e) {
                 mark("PAYLOAD-FETCH-THREW", (e && e.message) || String(e));
+              }
+              if (payloadBlob && !payloadVerified(payloadBlob)) {
+                mark("PAYLOAD-REFUSED", "SHA-256/size verification failed for " + PAYLOAD_FILE);
+                payloadBlob = null;
               }
               mark(
                 "PAYLOAD-BLOB",

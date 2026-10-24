@@ -4,3 +4,6 @@ node_modules/
 *.log
 __pycache__/
 *.py[cod]
+
+# Recreated losslessly from checksum-pinned user-uploaded archive.
+loader/user-ftp.bin

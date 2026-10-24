@@ -14,6 +14,7 @@
   }
 
   var message=document.getElementById("msg");
+  if(message&&/(?:[?&])ftp=1(?:&|$)/.test(location.search||""))message.textContent="Loading uploaded FTP payload (port 1337)…";
   var state=document.getElementById("state");
   var output=document.getElementById("out");
   var reported=false;
