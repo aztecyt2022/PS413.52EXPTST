@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import vm from 'node:vm';
 const root=new URL('../',import.meta.url);
+// Build the original user-uploaded FTP bytes from their exact git-tracked archive.
+execFileSync('python3',['scripts/materialize-user-ftp.py'],{cwd:new URL('.',root),stdio:'pipe'});
 const read=p=>readFileSync(new URL(p,root),'utf8');
 const bytes=p=>new Uint8Array(readFileSync(new URL(p,root)));
 const ps4=fw=>`Mozilla/5.0 (PlayStation 4 ${fw}) AppleWebKit/605.1.15`;
@@ -23,7 +26,7 @@ function environment(ua,{search='',session=new Map(),preference=new Map(),corrup
   }
   const context=vm.createContext({HEN_CONFIG:{passwordHash:testHash},navigator:{userAgent:ua},document:{getElementById:node,createElement:()=>({}),head:{appendChild:element=>modules.push(element)}},sessionStorage:storage(session),localStorage:storage(preference),location:{search,assign:path=>navigation.push(path),replace:path=>navigation.push(path)},XMLHttpRequest:XHR,Date:FakeDate,Uint8Array,ArrayBuffer,DataView,Int32Array,Promise,unescape,encodeURIComponent,setInterval:fn=>{intervals.set(++next,fn);return next;},clearInterval:id=>intervals.delete(id)});
   context.window=context;
-  for(const script of ['sha256.js','auth.js','device.js','payloads.js','app.js','entry.js'])vm.runInContext(read(script),context,{filename:script});
+  for(const script of ['sha256.js','auth.js','device.js','payloads.js','ftp-payload.js','app.js','entry.js'])vm.runInContext(read(script),context,{filename:script});
   return {context,node,intervals,navigation,requests,modules,session,login(password=testPassword){node('password').value=password;node('loginForm').submit();},async settle(){await Promise.all(pending);await new Promise(resolve=>setImmediate(resolve));},async advance(ms){now+=ms;for(const fn of [...intervals.values()])fn();await this.settle();},loadEntry(){vm.runInContext(read('loader/entry.js'),context);}};
 }
 
@@ -79,7 +82,7 @@ assert.equal(gated.context.document.title,'DEXCore v1');
 if(promoted) assert.equal(gated.context.HEN_BUILD.payload[0].split('?')[0],'dexcore.bin');
 for(const env of [gated,current]){
   const declaration=read('loader/jb.js').match(/const PAYLOAD_FILE = ([^;]+);/)[1];
-  assert.equal(vm.runInContext(declaration,env.context),env.context.HEN_BUILD.payload[0]);
+  assert.equal(vm.runInContext('const FTP_MODE=false; const payloadSpec=null; '+declaration,env.context),env.context.HEN_BUILD.payload[0]);
 }
 const guestLegacy=environment(ps4('13.52'),{search:'?legacy=1'});guestLegacy.loadEntry();
 assert.deepEqual(guestLegacy.navigation,['../index.html']);
@@ -96,6 +99,30 @@ const singleVersionHTML=read('index.html');
 assert(!/id="switchBuild"|href="\\?(?:original|legacy)=1"/.test(singleVersionHTML));
 assert(!/hen\\.bin|henacy\\.bin/.test(read('payloads.js')));
 console.log('PASS: exactly one DEXCore build is selectable; legacy query parameters cannot load old HEN payloads; PS4 13.52 gate and integrity checks retained.');
+
+const providedFtp=bytes('loader/user-ftp.bin');
+const ftpDigest=createHash('sha256').update(providedFtp).digest('hex');
+assert.equal(providedFtp.length,29052);
+assert.equal(ftpDigest,'b4b984524ac63508255175c76bdf942ebfbd577234337bfd91e2712e27738560');
+assert.equal(gated.context.DEXCORE_FTP.sha256,ftpDigest);
+assert.equal(gated.context.DEXCORE_FTP.port,1337);
+assert.equal(providedFtp[0],0xe9);
+const ftpHost=environment(ps4('13.52'));ftpHost.login();
+ftpHost.node('loadUserFtp').click();await ftpHost.settle();
+assert.deepEqual(ftpHost.navigation,['loader/jb.html?ftp=1&v=dexcore-userftp-1']);
+assert.equal(ftpHost.requests[0],'loader/user-ftp.bin');
+assert.equal(ftpHost.context.HEN_SHA256(providedFtp),ftpDigest);
+const ftpBad=environment(ps4('13.52'),{corrupt:true});ftpBad.login();
+ftpBad.node('loadUserFtp').click();await ftpBad.settle();
+assert.equal(ftpBad.navigation.length,0);
+assert.match(ftpBad.node('status').textContent,/verification failed/);
+const desktopFtp=environment('Desktop browser');desktopFtp.login();
+assert.equal(desktopFtp.node('loadUserFtp').disabled,true);
+assert.match(read('loader/jb.js'),/payloadVerified\(payloadBlob\)/);
+assert.match(read('loader/jb.js'),/payloadVerified\(blob\)/);
+assert.match(read('loader/jb.js'),/params\.get\("ftp"\) === "1"/);
+console.log('PASS: exact user-uploaded FTPS4 binary restored, SHA-verified, 1337 launch route, corrupted payload rejection and direct-loader revalidation.');
+
 
 const guestLoader=environment(ps4('13.52'));guestLoader.loadEntry();assert.deepEqual(guestLoader.navigation,['../index.html']);assert.equal(guestLoader.modules.length,0);
 const allowedLoader=environment(ps4('13.52'));allowedLoader.login();allowedLoader.loadEntry();assert.equal(allowedLoader.modules.length,1);assert.match(allowedLoader.modules[0].src,/^jb.js\?/);
