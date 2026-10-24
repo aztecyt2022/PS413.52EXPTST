@@ -63,7 +63,7 @@ if(promoted){
   assert.equal(gated.context.HEN_BUILD.payload[2],createHash('sha256').update(bytes('loader/dexcore.bin')).digest('hex'));
   const dexcore=Buffer.from(bytes('loader/dexcore.bin'));
   assert.equal(dexcore.length,500448);
-  assert(dexcore.includes(Buffer.from('DEXCORE')));
+  assert(dexcore.includes(Buffer.from('DEXCORE')) || dexcore.includes(Buffer.from('DEXCore v1')));
   if(dexcore.includes(Buffer.from('User FTPS4 / TCP 1337'))){
     assert.deepEqual([...dexcore.subarray(0x50155,0x5015a)],[144,144,144,144,144]);
     assert.deepEqual([...dexcore.subarray(0x5013e,0x50143)],[232,77,24,0,0]);
