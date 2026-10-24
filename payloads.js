@@ -1,11 +1,11 @@
 (function(){
   "use strict";
-  /* One current build only: obsolete version/overlay query parameters are ignored. */
+  /* DEXCORE 1.1: only the verified current payload is selectable. */
   window.HEN_BUILD={
     original:false,
     label:"DEXCORE",
     version:"1.1",
     query:"",
-    payload:["dexcore.bin?v=1-59189ee8000d",500448,"59189ee8000deb539a58e7a28ec191fc804af145480d3628cf87b1c6c5be1400"]
+    payload:["dexcore.bin?v=1-6bb0147cb2c7",500448,"6bb0147cb2c732adefec62384f0110961359f6030b0e6b3c667103ee56f54ee9"]
   };
 })();
