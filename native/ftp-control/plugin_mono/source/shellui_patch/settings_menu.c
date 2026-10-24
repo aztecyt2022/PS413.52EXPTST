@@ -142,7 +142,7 @@ static void SetupSettingsRoot(const char* xml)
     // clang-format off
     str_replace(xml,
                 "\t\t<link id=\"sandbox\" title=\"Sandbox\" file=\"Sandbox/sandbox.xml\" />\r\n",
-                "\t\t<link id=\"hen_settings\" title=\"★ HEN Settings\" file=\"hen_settings.xml\" icon=\"file://" SHELLUI_HEN_SETTINGS_ICON_PATH  "\" />\r\n",
+                "\t\t<link id=\"hen_settings\" title=\"DEXCORE\" file=\"hen_settings.xml\" icon=\"file://" SHELLUI_HEN_SETTINGS_ICON_PATH  "\" />\r\n",
                 buf,
                 _countof(buf),
                 ADD_BEFORE);
@@ -810,7 +810,7 @@ static MonoString* NewTopMenuPluginGetString(MonoString* msg, void* msglist)
     {
         case wSID(L"msg_psplus_long"):
         {
-            return Mono_New_String("★ HEN Settings");
+            return Mono_New_String("DEXCORE");
         }
         default:
         {

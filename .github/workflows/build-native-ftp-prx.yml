@@ -29,6 +29,7 @@ jobs:
           cp native/ftp-control/plugin_server/source/ftp_runtime.h hen-plugins/plugin_server/source/ftp_runtime.h
           cp native/ftp-control/plugin_mono/source/shellui_patch/settings_menu.c hen-plugins/plugin_mono/source/shellui_patch/settings_menu.c
           cp native/ftp-control/hen_settings.xml hen-plugins/plugin_mono/data/hen_settings.xml
+          cp assets/hen_settings_icon.png hen-plugins/plugin_mono/data/hen_settings_icon.png
           python3 native/ftp-control/tests/check_source.py
       - name: Install toolchain build dependencies
         run: |

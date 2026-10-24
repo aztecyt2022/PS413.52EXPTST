@@ -38,9 +38,10 @@ to precompiled `plugin_mono.prx` and `plugin_server.prx`. The new code
 **cannot fit into the existing fixed-length ShellUI XML patch alone**.
 Build both modified PRXs against a compatible OpenOrbis PS4 toolchain, then
 bundle them into the 13.52 HEN installer or deploy with verified on-console
-backup/rollback. The original native plugin also contains DEXCORE branding,
-an embedded logo, and System Information hooks that must be preserved during
-that build. Do not blindly overwrite it with upstream's unbranded PRX.
+backup/rollback. The rebuilt test plugin uses the current DEXCORE icon and root label. The
+installed 13.52 plugin also contains a custom System Information extension
+that remains unported in this upstream-derived candidate. Replacing the
+installed module would lose that extension and has not been approved. Do not blindly overwrite it with upstream's unbranded PRX.
 
 The GitHub workflow compiles/tests the portable native supervisor using
 mock server workers, and checks source integration, **not** complete PS4

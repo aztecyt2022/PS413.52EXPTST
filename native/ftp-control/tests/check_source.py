@@ -24,6 +24,8 @@ assert ftp.index("DEXCORE native FTP enabled")>ftp.index("if (listen(srvfd")
 assert '{"KILL", ftp_cmd_unavailable}' in ftp
 assert "wSID(L\"ftp_server\")" in settings
 assert 'strcmp(Id, "ftp_enabled")' in settings
+assert "★ HEN Settings" not in settings
+assert "DEXCORE" in settings
 assert "DexcoreFtpWriteState" in settings and "DexcoreFtpReadState" in settings
 assert "/data/hen/ftp_enabled" in settings
 compact=''.join(ElementTree.tostring(menu,encoding='unicode').splitlines())
