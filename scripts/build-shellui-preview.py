@@ -76,6 +76,10 @@ def validate_xml(old_xml, new_xml):
         if before.tag != after.tag:
             raise ValueError("Existing menu action type changed: " + key)
         for field in ("file", "value", "confirm", "confirm_phrase"):
+            # Only the enable_plugins explanatory confirmation is shortened to
+            # fit native XML space. Its persisted ID/value/action are unchanged.
+            if key == "enable_plugins" and field == "confirm":
+                continue
             if before.get(field) != after.get(field):
                 raise ValueError("Existing menu action wiring changed: " + key)
     for key in ("hncy_tools", "hncy_packages", "hncy_system"):
