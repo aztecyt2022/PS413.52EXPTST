@@ -36,14 +36,14 @@ def generate(source: Path, output: Path):
         raise ValueError("Embedded PRX ELF header invalid")
     plugin=data[START:END]
     # The separate top-level Settings menu label must not remain HNCY.
-    if b'title="DEXCore v1" file="hen_settings.xml"' not in plugin:
+    if b'title="DEXCORE" file="hen_settings.xml"' not in plugin:
         raise ValueError("Outer PS4 Settings label was not rebranded")
     if b'title="\xe2\x98\x85 HNCY" file="hen_settings.xml"' in plugin:
         raise ValueError("Legacy outer PS4 Settings label still embedded")
     if len(plugin)!=141152 or not plugin[XML_OFFSET-START:XML_OFFSET-START+24].startswith(b"<?xml version"):
         raise ValueError("Native Settings XML is not in expected plugin range")
     raw_xml=data[XML_OFFSET:XML_OFFSET+XML_SIZE].rstrip(b" ")
-    if b"DEXCore v1" not in raw_xml or b"FTP / Payload Options" not in raw_xml:
+    if b"DEXCORE" not in raw_xml or b"File System" not in raw_xml:
         raise ValueError("Compiled plugin does not carry the DEXCore FTP menu")
     # Compare the editable XML after its documented, whitespace-only compaction.
     xml=ROOT.joinpath("shellui/hen_settings.xml").read_text("utf-8")
@@ -63,7 +63,7 @@ def generate(source: Path, output: Path):
     (output/"plugin_server.prx").write_bytes(server)
     (output/"hen_settings.xml").write_bytes(raw_xml)
     manifest={
-        "platform":"PS4","firmware":"13.52","brand":"DEXCore v1",
+        "platform":"PS4","firmware":"13.52","brand":"DEXCORE","version":"1.1",
         "hardware_verified":False,"target":"/data/hen/plugin_mono.prx",
         "xml_target":"/data/hen/shellui_data/hen_settings.xml",
         "server_target":"/data/hen/plugin_server.prx",

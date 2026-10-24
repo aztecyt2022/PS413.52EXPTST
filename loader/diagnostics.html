@@ -3,30 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DEXCore v1 — diagnostics</title>
-<link rel="icon" type="image/png" href="../assets/hen_settings_icon.png">
-<meta name="application-name" content="DEXCore v1">
+<title>DEXCORE 1.1 — diagnostics</title>
+<link rel="icon" type="image/png" href="../assets/hen_settings_icon.png?v=1-1">
+<meta name="application-name" content="DEXCORE 1.1">
 <style>
-body{margin:0;background:#101014;color:#eee;font:18px Arial,sans-serif}
+body{margin:0;background:#090405;color:#ffdce0;font:16px Consolas,monospace}
 main{max-width:850px;margin:0 auto;padding:24px}
 h1{color:#ff6464;font-size:28px}h2{font-size:21px}
 p{line-height:1.5}a{color:#ffc0c0}#results{padding:0;list-style:none}
-#results li{padding:9px 10px;margin:5px 0;border:1px solid #393942;background:#1a1a20;white-space:pre-wrap;overflow-wrap:break-word}
+#results li{padding:9px 10px;margin:5px 0;border:1px solid #622028;background:#14090c;white-space:pre-wrap;overflow-wrap:break-word}
 .ok{border-left:5px solid #69d18f!important}.bad{border-left:5px solid #ff6666!important}
 .warn{border-left:5px solid #ffd166!important}small{color:#ccc}
 </style>
 </head>
 <body>
 <main>
-<h1>DEXCore v1 — PS4 Diagnostics</h1>
+<h1>DEXCORE 1.1 — PS4 Diagnostics</h1>
 <p>This page checks firmware detection, JavaScript support, and hosted files. <strong>It does not start the exploit or modify the console.</strong></p>
-<p><a id="back" href="../index.html">Back to DEXCore</a></p>
+<p><a id="back" href="../index.html">Back to DEXCORE</a></p>
 <h2 id="headline">Checking the host…</h2>
 <ul id="results" aria-live="polite"></ul>
-<p><small>If checks pass but DEXCore still fails, take a photo of the messages on the exploit loader page. Look for PROOF-FAIL, THREW, and the final stage. A working host is not proof of a working kernel exploit.</small></p>
+<p><small>If checks pass but DEXCORE still fails, take a photo of the messages on the exploit loader page. Look for PROOF-FAIL, THREW, and the final stage. A working host is not proof of a working kernel exploit.</small></p>
 </main>
 <script src="../device.js"></script>
-<script src="../payloads.js?v=dexcore-v1-current-only-1"></script>
+<script src="../payloads.js?v=dexcore-v1-1"></script>
 <script src="../ftp-payload.js?v=userftp-b4b98452"></script>
 <script src="../sha256.js"></script>
 <script>
@@ -86,7 +86,7 @@ function resource(name,path,size,hash){
 if(build&&build.payload){
  var files=["jb.js","core.js","mem.js","int64.js","ps4_offsets.js","rpc_worker.js"];
  for(var i=0;i<files.length;i++)resource(files[i],files[i],0,"");
- resource("DEXCore payload",build.payload[0],build.payload[1],build.payload[2]);
+ resource("DEXCORE payload",build.payload[0],build.payload[1],build.payload[2]);
  if(window.DEXCORE_FTP){
   var ftp=window.DEXCORE_FTP;
   resource("Uploaded FTPS4 (TCP 1337)",ftp.filename,ftp.size,ftp.sha256);

@@ -24,24 +24,26 @@ if hashlib.sha256(legacy.read_bytes()).hexdigest()!="ea1235b846b08434123feec9b9c
 if hashlib.sha256(original.read_bytes()).hexdigest()!="568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e":
     raise SystemExit("Original HEN rollback binary changed")
 bytes_=candidate.read_bytes()
-assert b"DEXCore v1" in bytes_ and b"FTP / Payload Options" in bytes_
-assert b" | DEXCore\x00" in bytes_
+assert b"DEXCORE" in bytes_ and b"System Settings" in bytes_ and b"File System" in bytes_
+assert b" | DEXCORE\x00" in bytes_
+assert b"File System" in bytes_
 assert bytes_[0x50155:0x5015a] == bytes.fromhex("9090909090"), "Bundled FTP still auto-starts"
 assert bytes_[0x5013e:0x50143] == bytes.fromhex("e84d180000"), "Kernel logging thread changed"
-assert b"DEXCore already loaded. Skipping..." in bytes_
+assert b"DEXCORE already loaded. Skipping..." in bytes_
 assert b"HNCY restarting" not in bytes_
 assert b"HENACY already installed" not in bytes_
-assert b'title="DEXCore v1" file="hen_settings.xml"' in bytes_
+assert b'title="DEXCORE" file="hen_settings.xml"' in bytes_
 assert b'title="\xe2\x98\x85 HNCY" file="hen_settings.xml"' not in bytes_
 shutil.copyfile(candidate,published)
 hash_full=hashlib.sha256(bytes_).hexdigest()
 hash_short=hash_full[:12]
 js="""(function(){
   "use strict";
-  /* One current build only: obsolete version/overlay query parameters are ignored. */
+  /* DEXCORE 1.1: only the verified current payload is selectable. */
   window.HEN_BUILD={
     original:false,
-    label:"DEXCore v1",
+    label:"DEXCORE",
+    version:"1.1",
     query:"",
     payload:["dexcore.bin?v=1-{hash_short}",500448,"{hash_full}"]
   };

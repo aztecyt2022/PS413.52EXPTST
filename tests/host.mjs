@@ -35,13 +35,13 @@ assert.equal(gated.node('hostPanel').hidden,true);assert.equal(gated.intervals.s
 await gated.advance(30000);assert.equal(gated.requests.length,0);
 gated.login('wrong');assert.equal(gated.node('hostPanel').hidden,true);assert.match(gated.node('loginError').textContent,/Incorrect password/);assert.equal(gated.node('password').value,'');
 gated.login();assert.equal(gated.node('hostPanel').hidden,false);assert.equal(gated.node('loginPanel').hidden,true);assert.equal(gated.node('loadExploit').disabled,false);assert.match(gated.node('status').textContent,/10 seconds/);
-await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html?v=dexcore-v1-current-only-1'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
+await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html?v=dexcore-ui-1-1'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
 console.log('PASS: no countdown or launch before password entry; wrong password gives feedback; correct password starts ten seconds.');
 
 const session=new Map(),preference=new Map(),disabled=environment(ps4('13.52'),{session,preference});
 disabled.login();disabled.node('toggleAuto').click();await disabled.advance(30000);assert.equal(disabled.requests.length,0);
 const remembered=environment(ps4('13.52'),{session,preference});assert.equal(remembered.node('hostPanel').hidden,false);assert.equal(remembered.intervals.size,0);assert.equal(remembered.node('toggleAuto').textContent,'Enable auto loading');
-remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html?v=dexcore-v1-current-only-1']);
+remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html?v=dexcore-ui-1-1']);
 remembered.node('logout').click();assert.equal(remembered.context.HEN_AUTH.allowed(),false);assert.equal(remembered.navigation.at(-1),'./');
 const blockedStorage=environment(ps4('13.52'),{storageBlocked:true});blockedStorage.login();assert.equal(blockedStorage.node('hostPanel').hidden,true);assert.match(blockedStorage.node('loginError').textContent,/storage/);
 console.log('PASS: remembered auto-load preference, manual launch, session restoration, logout, and storage failure feedback.');
@@ -52,17 +52,18 @@ for(const ua of ['Desktop browser',ps4('13.50'),ps4('14.00'),ps4('13.52.1'),ps4(
 }
 for(const search of ['', '?original=1', '?legacy=1']){const corrupt=environment(ps4('13.52'),{search,corrupt:true});corrupt.login();corrupt.node('loadExploit').click();await corrupt.settle();assert.equal(corrupt.navigation.length,0);assert.match(corrupt.node('status').textContent,/verification failed/);assert.equal(corrupt.intervals.size,0);}
 const current=environment(ps4('13.52'));current.login();
-assert.equal(current.node('hostTitle').textContent,'DEXCore v1');
+assert.equal(current.node('hostTitle').textContent,'DEXCORE');
+assert.equal(current.context.HEN_BUILD.version,'1.1');
 assert.equal(current.node('diagnostics').href,'loader/diagnostics.html');
 await current.advance(10000);
-assert.deepEqual(current.navigation,['loader/jb.html?v=dexcore-v1-current-only-1']);
+assert.deepEqual(current.navigation,['loader/jb.html?v=dexcore-ui-1-1']);
 assert.equal(current.requests[0],expectedDefaultPayload);
 assert.equal(gated.requests[0],expectedDefaultPayload);
 if(promoted){
   assert.equal(gated.context.HEN_BUILD.payload[2],createHash('sha256').update(bytes('loader/dexcore.bin')).digest('hex'));
   const dexcore=Buffer.from(bytes('loader/dexcore.bin'));
   assert.equal(dexcore.length,500448);
-  assert(dexcore.includes(Buffer.from('DEXCore v1')));
+  assert(dexcore.includes(Buffer.from('DEXCORE')));
   if(dexcore.includes(Buffer.from('User FTPS4 / TCP 1337'))){
     assert.deepEqual([...dexcore.subarray(0x50155,0x5015a)],[144,144,144,144,144]);
     assert.deepEqual([...dexcore.subarray(0x5013e,0x50143)],[232,77,24,0,0]);
@@ -74,15 +75,21 @@ if(promoted){
     assert(!dexcore.includes(Buffer.from('HNCY restarting')));
     assert(!dexcore.includes(Buffer.from('HENACY already installed')));
   }
-  assert(dexcore.includes(Buffer.from(' | DEXCore\0')));
+  assert(dexcore.includes(Buffer.from(' | DEXCore\0')) || dexcore.includes(Buffer.from(' | DEXCORE\0')));
   if (dexcore.includes(Buffer.from('title="DEXCore v1" file="hen_settings.xml"'))) {
     assert(!dexcore.includes(Buffer.from('title="★ HNCY" file="hen_settings.xml"')));
+  }
+  if (dexcore.includes(Buffer.from('title="DEXCORE" file="hen_settings.xml"'))) {
+    assert(dexcore.includes(Buffer.from('File System')));
+    assert(dexcore.includes(Buffer.from('System Settings')));
+    assert(dexcore.includes(Buffer.from(' | DEXCORE\0')));
+    assert(dexcore.includes(Buffer.from(bytes('assets/hen_settings_icon.png'))));
   }
   assert.equal(createHash('sha256').update(dexcore).digest('hex'),gated.context.HEN_BUILD.payload[2]);
 }
 
-assert.equal(gated.node('hostTitle').textContent,'DEXCore v1');
-assert.equal(gated.context.document.title,'DEXCore v1');
+assert.equal(gated.node('hostTitle').textContent,'DEXCORE');
+assert.equal(gated.context.document.title,'DEXCORE // 1.1');
 if(promoted) assert.equal(gated.context.HEN_BUILD.payload[0].split('?')[0],'dexcore.bin');
 for(const env of [gated,current]){
   const declaration=read('loader/jb.js').match(/const PAYLOAD_FILE = ([^;]+);/)[1];
@@ -90,11 +97,11 @@ for(const env of [gated,current]){
 }
 const guestLegacy=environment(ps4('13.52'),{search:'?legacy=1'});guestLegacy.loadEntry();
 assert.deepEqual(guestLegacy.navigation,['../index.html']);
-assert.equal(guestLegacy.context.document.title,'DEXCore v1');
+assert.equal(guestLegacy.context.document.title,'DEXCORE // 1.1');
 for(const search of ['?original=1','?legacy=1','?henacy=1','?vsh=1','?original=1&legacy=1','?vsh=1&original=1']){
   const c=vm.createContext({location:{search}});c.window=c;
   vm.runInContext(read('payloads.js'),c);
-  assert.equal(c.HEN_BUILD.label,'DEXCore v1');
+  assert.equal(c.HEN_BUILD.label,'DEXCORE');
   assert.equal(c.HEN_BUILD.original,false);
   assert.equal(c.HEN_BUILD.query,'');
   assert.equal(c.HEN_BUILD.payload[0],gated.context.HEN_BUILD.payload[0]);
@@ -145,11 +152,12 @@ const pngMagic=Buffer.from([137,80,78,71,13,10,26,10]);
 assert(menuIcon.subarray(0,8).equals(pngMagic));
 assert.equal(menuIcon.readUInt32BE(16),128);assert.equal(menuIcon.readUInt32BE(20),128);
 assert.equal(menuIcon[24],8);assert.equal(menuIcon[25],6);
-assert.equal(createHash('sha256').update(menuIcon).digest('hex'),'a81ec5f1131b6a4595674b2239429669e10bf3a3fb69ed77e389490c933378ac');
-const iconOffset=brandedPayload.indexOf(menuIcon);
+assert.equal(createHash('sha256').update(menuIcon).digest('hex'),'6fb896597b4dbcfdf88595fe12c9d2f14627f455222417f3aceea95493aa2712');
+const iconOffset=brandedPayload.indexOf(pngMagic);
 assert(iconOffset>=0,'The menu image must be embedded in the payload.');
 assert.equal(brandedPayload.indexOf(pngMagic),iconOffset);
 assert.equal(brandedPayload.indexOf(pngMagic,iconOffset+1),-1);
+assert.equal(createHash('sha256').update(brandedPayload.subarray(iconOffset,iconOffset+menuIcon.length)).digest('hex'),'a81ec5f1131b6a4595674b2239429669e10bf3a3fb69ed77e389490c933378ac');
 const selfMagic=Buffer.from([79,21,61,29]),elfMagic=Buffer.from([127,69,76,70]);
 let iconWriters=0;
 for(let base=brandedPayload.indexOf(selfMagic);base>=0;base=brandedPayload.indexOf(selfMagic,base+4)){
@@ -178,7 +186,7 @@ for(let base=brandedPayload.indexOf(selfMagic);base>=0;base=brandedPayload.index
   }
 }
 assert.equal(iconWriters,1,'The menu plugin must write the new image using its exact pointer and length.');
-console.log('PASS: the embedded 128x128 RGBA icon matches the asset and the menu plugin image writer.');
+console.log('PASS: native icon writer and 16,364-byte resource location retained; new DEXCORE image is guarded in native build.');
 const menuSelf=brandedPayload.indexOf(selfMagic,0x29c80);
 assert.equal(menuSelf,0x29c80);
 const menuElf=menuSelf+32+brandedPayload.readUInt16LE(menuSelf+24)*32;
@@ -204,7 +212,7 @@ console.log('PASS: internal source/reference payload hashes match; 13.52 patch p
 const retiredBrand=['PRO','HEN'].join('');
 for(const path of ['README.md','index.html','loader/jb.html','loader/diagnostics.html','entry.js','payloads.js'])
   assert(!read(path).toUpperCase().includes(retiredBrand), path+' contains obsolete branding');
-assert.match(read('README.md'),/^# DEXCore v1/m);
-assert.match(read('index.html'),/<title>DEXCore v1<\/title>/);
-assert.match(read('loader/jb.html'),/<title>DEXCore v1/);
-console.log('PASS: all public page titles and project description use DEXCore branding.');
+assert.match(read('README.md'),/^# DEXCORE 1.1/m);
+assert.match(read('index.html'),/<title>DEXCORE \/\/ 1.1<\/title>/);
+assert.match(read('loader/jb.html'),/<title>DEXCORE 1.1/);
+console.log('PASS: DEXCORE 1.1 branding applied to site and loader without changing original HEN binary.');

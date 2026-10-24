@@ -22,9 +22,14 @@ class NativeShellUIMenuTests(unittest.TestCase):
         import xml.etree.ElementTree as ET
         root = ET.fromstring(edited)
         nodes = builder.index_ids(root)
-        assert nodes["id_hen_settings"].get("title") == "★ DEXCore v1"
+        assert nodes["id_hen_settings"].get("title") == "DEXCORE"
         assert nodes["payload_options"].get("initial_focus_to") == "enable_plugins"
-        assert "FTP / Payload Options" in nodes["payload_options"].get("title")
+        assert nodes["payload_options"].get("title") == "System Settings"
+        assert nodes["file_system"].get("title") == "File System"
+        assert nodes["ftp_server"].get("title") == "FTP Server"
+        assert nodes["hncy_tools"] in list(nodes["file_system"])
+        assert nodes["payload_options"] in list(nodes["hncy_system"])
+        assert nodes["ftp_info"].get("title") == "FTPS4: TCP 1337"
         switch = nodes["enable_plugins"]
         assert switch.tag == "toggle_switch" and "Plugins" in switch.get("title")
         assert switch.get("value") == "0" # actual runtime state comes from HEN INI
@@ -53,13 +58,21 @@ class NativeShellUIMenuTests(unittest.TestCase):
         for name, address, before, after in builder.NOTIFICATION_PATCHES:
             self.assertEqual(original[address:address+len(before)], before, name)
             self.assertEqual(new[address:address+len(before)], after.ljust(len(before), b"\x00"), name)
-        self.assertIn(b'DEXCore v1', new[builder.XML_START:end])
-        self.assertIn(b'FTP / Payload Options', new[builder.XML_START:end])
+        self.assertIn(b'DEXCORE', new[builder.XML_START:end])
+        self.assertIn(b'File System', new[builder.XML_START:end])
         self.assertIn(b'enable_plugins', new[builder.XML_START:end])
         self.assertIn(b'hncy_tools', new[builder.XML_START:end])
         self.assertIn(b'hncy_packages', new[builder.XML_START:end])
         self.assertIn(b'hncy_system', new[builder.XML_START:end])
         self.assertNotIn(b'HNCY', new[builder.XML_START:end])
+        icon_start=original.find(builder.ICON_MAGIC, 0x29C80, 0x4C3E0)
+        self.assertGreater(icon_start, 0x29C80)
+        expected_icon=(ROOT/"assets"/"hen_settings_icon.png").read_bytes()
+        self.assertEqual(len(expected_icon), builder.ICON_LEN)
+        self.assertEqual(hashlib.sha256(expected_icon).hexdigest(),builder.ICON_NEW_SHA256)
+        self.assertEqual(hashlib.sha256(original[icon_start:icon_start+builder.ICON_LEN]).hexdigest(),builder.ICON_OLD_SHA256)
+        self.assertEqual(new[icon_start:icon_start+builder.ICON_LEN],expected_icon)
+
         call=builder.BUILTIN_FTP_CREATE_AT
         self.assertEqual(original[call:call + 5],builder.BUILTIN_FTP_CREATE_ORIGINAL)
         self.assertEqual(new[call:call + 5],builder.BUILTIN_FTP_CREATE_DISABLED)

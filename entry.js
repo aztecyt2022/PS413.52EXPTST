@@ -5,7 +5,7 @@
   var host=document.getElementById("hostPanel");
   var password=document.getElementById("password");
   var error=document.getElementById("loginError");
-  document.title=window.HEN_BUILD.label;
+  document.title=window.HEN_BUILD.label+" // "+window.HEN_BUILD.version;
   document.getElementById("loginTitle").textContent=window.HEN_BUILD.label;
   function enterHost(){
     if(started||!window.HEN_AUTH.allowed())return;

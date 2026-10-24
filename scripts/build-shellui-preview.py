@@ -2,7 +2,7 @@
 """Build a TEST-ONLY DEXCore PS4 ShellUI menu payload from editable native XML.
 
 Only verified static strings, the XML menu, and the System Information suffix change.
-The only executable edit is an exact five-byte NOP of the legacy FTP thread creation. No firmware/kernel bytes, kernel log startup, or icon is changed.
+The only executable edit is an exact five-byte NOP of the legacy FTP thread creation. No firmware/kernel bytes or kernel log startup instructions are changed.
 """
 import argparse
 import hashlib
@@ -17,25 +17,28 @@ XML_SLOT = 5069
 # Guarded, shorten-only replacement within the native PUI extension constants.
 # Preserve the original NUL-terminated string allocation exactly.
 OLD_SUFFIX = b" | HENACY v1\x00"
-NEW_SUFFIX = b" | DEXCore\x00"
+NEW_SUFFIX = b" | DEXCORE\x00"
 BRAND_REGION = (0x39A6D, 0x3C000)
 
 # The outer PS4 Settings link is a separately compiled XML string in the
 # plugin_mono PRX. An equal-byte-length swap avoids shifting native rodata.
 TOP_LINK_OLD = ('\t\t<link id="hen_settings" title="★ HNCY" file="hen_settings.xml" '
                 'icon="file:///data/hen/shellui_data/icons/hen_settings_icon.png" />\r\n').encode("utf-8")
-TOP_LINK_NEW = ('<link id="hen_settings" title="DEXCore v1" file="hen_settings.xml" '
-                'icon="file:///data/hen/shellui_data/icons/hen_settings_icon.png" />\r\n').encode("utf-8")
+TOP_LINK_HEAD = ('<link id="hen_settings" title="DEXCORE" file="hen_settings.xml" '
+                 'icon="file:///data/hen/shellui_data/icons/hen_settings_icon.png" ')
+TOP_LINK_NEW = (TOP_LINK_HEAD +
+                ' ' * (len(TOP_LINK_OLD) - len((TOP_LINK_HEAD + '/>\r\n').encode("utf-8"))) +
+                '/>\r\n').encode("utf-8")
 assert len(TOP_LINK_NEW) == len(TOP_LINK_OLD)
 
 # Guarded length-preserving native notification edits. Verified ftpsrv build ID.
 NOTIFICATION_PATCHES = (
-    ("installer_version", 0xA6AA, b"HENACY v1", b"DEXCore"),
-    ("already_installed", 0xA7D5, b"HENACY already installed. Skipping...", b"DEXCore already loaded. Skipping..."),
-    ("restart_notice", 0xAA2D, b"HNCY restarting %s\nin %d seconds...", b"DEXCore restart %s\nin %d seconds..."),
-    ("shellui_version", 0x376E4, b"HNCY Version: %s", b"DEXCore: %s"),
-    ("topmenu_label", 0x37C56, "★ HNCY".encode("utf-8"), b"DEXCore"),
-    ("info_version", 0x39BA4, b"HENACY v1", b"DEXCore"),
+    ("installer_version", 0xA6AA, b"HENACY v1", b"DEXCORE"),
+    ("already_installed", 0xA7D5, b"HENACY already installed. Skipping...", b"DEXCORE already loaded. Skipping..."),
+    ("restart_notice", 0xAA2D, b"HNCY restarting %s\nin %d seconds...", b"DEXCORE restart %s\nin %d seconds..."),
+    ("shellui_version", 0x376E4, b"HNCY Version: %s", b"DEXCORE: %s"),
+    ("topmenu_label", 0x37C56, "★ HNCY".encode("utf-8"), b"DEXCORE"),
+    ("info_version", 0x39BA4, b"HENACY v1", b"DEXCORE"),
     ("info_log", 0x39C0D, b"[HNCY] System Information version: %s; logo hook: %s\n", b"[DEXCore] System Information: %s; logo: %s\n"),
 )
 FTP_BUILD_REVISION = b"a717ffd0b4699"
@@ -50,6 +53,13 @@ BUILTIN_FTP_CREATE_DISABLED = b"\x90" * 5
 BUILTIN_FTP_FUNCTION_AT = 0x4FE60
 BUILTIN_FTP_LEA_AT = 0x5014B
 BUILTIN_KLOG_CREATE_AT = 0x5013E
+
+# Keep the native writer's original 16,364-byte icon allocation unchanged.
+ICON_LEN = 16364
+ICON_OLD_SHA256 = "a81ec5f1131b6a4595674b2239429669e10bf3a3fb69ed77e389490c933378ac"
+ICON_NEW_SHA256 = "6fb896597b4dbcfdf88595fe12c9d2f14627f455222417f3aceea95493aa2712"
+ICON_MAGIC = b"\x89PNG\r\n\x1a\n"
+
 
 
 
@@ -96,8 +106,12 @@ def validate_xml(old_xml, new_xml):
     for key in ("hncy_tools", "hncy_packages", "hncy_system"):
         if key not in current or current[key].tag != "setting_list":
             raise ValueError("Missing native HENACY submenu: " + key)
-    if current["id_hen_settings"].get("initial_focus_to") != "payload_options":
-        raise ValueError("DEXCore initial focus is not connected")
+    if current["id_hen_settings"].get("initial_focus_to") != "file_system":
+        raise ValueError("DEXCORE initial focus must point to File System")
+    if current["payload_options"] not in list(current["hncy_system"]):
+        raise ValueError("System settings must remain on payload_options handler")
+    if current["hncy_tools"] not in list(current["file_system"]):
+        raise ValueError("DEXCORE Tools must reside inside File System")
 
 
 def build(base_path, menu_path, output_path):
@@ -140,8 +154,19 @@ def build(base_path, menu_path, output_path):
     if not 0x29C80 < outer_at < XML_START - len(TOP_LINK_OLD):
         raise ValueError("Outer Settings link is outside the plugin PRX")
     candidate[outer_at:outer_at + len(TOP_LINK_OLD)] = TOP_LINK_NEW
-    # No executable bytes, firmware offsets or other native resources may change.
-    allowed = [(XML_START, end), (offset, offset + len(OLD_SUFFIX)),
+    icon_start = base.find(ICON_MAGIC, 0x29C80, 0x4C3E0)
+    if icon_start < 0 or base.find(ICON_MAGIC, icon_start + 8, 0x4C3E0) >= 0:
+        raise ValueError("Unexpected native icon resource layout")
+    original_icon = base[icon_start:icon_start + ICON_LEN]
+    if hashlib.sha256(original_icon).hexdigest() != ICON_OLD_SHA256:
+        raise ValueError("Original HEN native icon changed")
+    user_icon = Path("assets/hen_settings_icon.png").read_bytes()
+    if (len(user_icon) != ICON_LEN or not user_icon.startswith(ICON_MAGIC)
+        or hashlib.sha256(user_icon).hexdigest() != ICON_NEW_SHA256):
+        raise ValueError("Unexpected DEXCORE icon content or size")
+    candidate[icon_start:icon_start + ICON_LEN] = user_icon
+    # No unapproved firmware or native resource bytes may change.
+    allowed = [(icon_start, icon_start + ICON_LEN), (XML_START, end), (offset, offset + len(OLD_SUFFIX)),
                (outer_at, outer_at + len(TOP_LINK_OLD))]
     # Existing plugin_server compiled thread creation:
     #   pthread_create(klog); pthread_create(ftp); while(1) sleep(60);
@@ -177,10 +202,11 @@ def build(base_path, menu_path, output_path):
     print("Built DEXCore ShellUI menu TEST payload:", output_path)
     print("SHA-256:", hashlib.sha256(candidate).hexdigest())
     print("XML resource bytes:", len(data), "/", XML_SLOT)
-    print("Original web payload, all firmware/kernel bytes, and icon unchanged.")
+    print("Native icon updated with equal-size DEXCORE logo; other kernel bytes unchanged.")
     print("Native version suffix patched at:", hex(offset))
     print("Outer PS4 Settings title patched at:", hex(outer_at))
     print("Native notification fixes:", len(NOTIFICATION_PATCHES))
+    print("DEXCORE Settings icon bytes:", ICON_LEN)
     print("Builtin plugin_server FTP autostart disabled; klog creation unchanged at:", hex(BUILTIN_KLOG_CREATE_AT))
     print("PS4 13.52 hardware test: NOT YET VERIFIED")
 
