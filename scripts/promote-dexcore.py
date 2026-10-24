@@ -24,7 +24,7 @@ if hashlib.sha256(legacy.read_bytes()).hexdigest()!="ea1235b846b08434123feec9b9c
 if hashlib.sha256(original.read_bytes()).hexdigest()!="568d57e7c6bfff1b96fc20a4e00b9ca744aa58b135a56eeb5c66c1175acfac3e":
     raise SystemExit("Original HEN rollback binary changed")
 bytes_=candidate.read_bytes()
-assert b"DEXCore v1" in bytes_ and b"FTP Server" in bytes_
+assert b"DEXCore v1" in bytes_ and b"FTP / Payload Options" in bytes_
 assert b" | DEXCore\x00" in bytes_
 assert bytes_[0x50155:0x5015a] == bytes.fromhex("9090909090"), "Bundled FTP still auto-starts"
 assert bytes_[0x5013e:0x50143] == bytes.fromhex("e84d180000"), "Kernel logging thread changed"

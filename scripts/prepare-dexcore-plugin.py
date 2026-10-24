@@ -43,7 +43,7 @@ def generate(source: Path, output: Path):
     if len(plugin)!=141152 or not plugin[XML_OFFSET-START:XML_OFFSET-START+24].startswith(b"<?xml version"):
         raise ValueError("Native Settings XML is not in expected plugin range")
     raw_xml=data[XML_OFFSET:XML_OFFSET+XML_SIZE].rstrip(b" ")
-    if b"DEXCore v1" not in raw_xml or b"FTP Server" not in raw_xml:
+    if b"DEXCore v1" not in raw_xml or b"FTP / Payload Options" not in raw_xml:
         raise ValueError("Compiled plugin does not carry the DEXCore FTP menu")
     # Compare the editable XML after its documented, whitespace-only compaction.
     xml=ROOT.joinpath("shellui/hen_settings.xml").read_text("utf-8")

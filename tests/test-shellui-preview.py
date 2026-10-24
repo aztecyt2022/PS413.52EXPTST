@@ -24,7 +24,7 @@ class NativeShellUIMenuTests(unittest.TestCase):
         nodes = builder.index_ids(root)
         assert nodes["id_hen_settings"].get("title") == "★ DEXCore v1"
         assert nodes["payload_options"].get("initial_focus_to") == "enable_plugins"
-        assert "FTP Server" in nodes["payload_options"].get("title")
+        assert "FTP / Payload Options" in nodes["payload_options"].get("title")
         switch = nodes["enable_plugins"]
         assert switch.tag == "toggle_switch" and "Plugins" in switch.get("title")
         assert switch.get("value") == "0" # actual runtime state comes from HEN INI
@@ -54,7 +54,7 @@ class NativeShellUIMenuTests(unittest.TestCase):
             self.assertEqual(original[address:address+len(before)], before, name)
             self.assertEqual(new[address:address+len(before)], after.ljust(len(before), b"\x00"), name)
         self.assertIn(b'DEXCore v1', new[builder.XML_START:end])
-        self.assertIn(b'FTP Server', new[builder.XML_START:end])
+        self.assertIn(b'FTP / Payload Options', new[builder.XML_START:end])
         self.assertIn(b'enable_plugins', new[builder.XML_START:end])
         self.assertIn(b'hncy_tools', new[builder.XML_START:end])
         self.assertIn(b'hncy_packages', new[builder.XML_START:end])
