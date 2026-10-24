@@ -13,7 +13,7 @@
   <meta property="og:description" content="Red terminal homebrew host for PS4 firmware 13.52.">
   <meta name="twitter:title" content="DEXCORE 1.1">
   <link rel="icon" type="image/png" href="assets/hen_settings_icon.png?v=1-1">
-  <link rel="stylesheet" href="style.css?v=dexcore-ftp-control-1">
+  <link rel="stylesheet" href="style.css?v=dexcore-loader-only-1">
 </head>
 <body>
 <div class="scanlines" aria-hidden="true"></div>
@@ -79,44 +79,6 @@
       </section>
     </div>
 
-    <div class="modules-grid">
-      <section class="module-card">
-        <div class="module-index">01 / FILE SYSTEM</div>
-        <h2><span class="file-icon">▣</span> FTP SERVER</h2>
-        <p>Your uploaded standalone FTPS4 payload. Port <strong>1337</strong>. Requires an already-jailbroken PS4 and remains separate from the native plugin.</p>
-        <button id="loadUserFtp" class="cmd-btn module-action" type="button" disabled><span class="btn-prompt">&gt;</span> ENABLE FTPS4 :1337</button>
-        <div class="ftp-help">
-          <div class="ftp-help-title">SERVER MANAGEMENT // DEFAULT OFF</div>
-          <p>Launch FTP independently from plugins. To check or stop the running FTPS4 service without disabling HEN or kernel logging, use the verified LAN controller on a computer:</p>
-          <details>
-            <summary>STATUS / DISABLE FTP (LAN CONTROLLER)</summary>
-            <p><a class="inline-link" href="tools/ftp-control.py" download="dexcore-ftp-control.py">DOWNLOAD FTP CONTROL SCRIPT ↓</a></p>
-            <code>python dexcore-ftp-control.py --ip PS4_LAN_IP --status</code>
-            <code>python dexcore-ftp-control.py --ip PS4_LAN_IP --stop</code>
-            <p>This sends the existing FTPS4 SHUTDOWN command and checks the listener. The PS4 browser itself cannot issue raw FTP control commands.</p>
-          </details>
-        </div>
-      </section>
-      <section class="module-card">
-        <div class="module-index">02 / DIAGNOSTICS</div>
-        <h2><span class="file-icon">⌁</span> SYSTEM SCAN</h2>
-        <p>Check PS4 browser support, firmware identification and integrity of the hosted payloads without running the exploit.</p>
-        <a id="diagnostics" class="cmd-btn module-action link-btn" href="loader/diagnostics.html"><span class="btn-prompt">&gt;</span> RUN DIAGNOSTICS</a>
-      </section>
-      <section class="module-card">
-        <div class="module-index">03 / SYSTEM</div>
-        <h2><span class="file-icon">⚙</span> PAYLOAD OPTIONS</h2>
-        <p>File System, DEXCORE Tools and native System settings are available inside the PS4 Settings menu after HEN loads.</p>
-        <a class="inline-link" href="https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-plugin-repair.yml">NATIVE SETTINGS REPAIR ↗</a>
-      </section>
-      <section class="module-card">
-        <div class="module-index">04 / SOURCE</div>
-        <h2><span class="file-icon">≡</span> BUILD INFO</h2>
-        <p>Single current build: <strong>DEXCORE 1.1</strong>. Native build artifacts and notices remain available.</p>
-        <a class="inline-link" href="https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml">VIEW BUILD STATUS ↗</a>
-        <a class="inline-link" href="overlay-plugin-license.txt">PLUGIN LICENSE ↗</a>
-      </section>
-    </div>
     <footer class="footer-bar"><span>DEXCORE SYSTEM CONSOLE // RED TERMINAL INTERFACE</span><button id="logout" type="button">[ LOG OUT ]</button></footer>
   </main>
   <noscript><p>Enable JavaScript to use this host.</p></noscript>
@@ -126,8 +88,7 @@
 <script src="auth.js"></script>
 <script src="device.js"></script>
 <script src="payloads.js?v=dexcore-v1-1"></script>
-<script src="ftp-payload.js?v=userftp-b4b98452"></script>
-<script src="app.js?v=dexcore-ftp-control-1"></script>
+<script src="app.js?v=dexcore-loader-only-1"></script>
 <script src="entry.js?v=dexcore-ui-1-1"></script>
 </body>
 </html>
