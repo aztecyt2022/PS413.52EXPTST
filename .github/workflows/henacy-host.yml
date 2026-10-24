@@ -1,4 +1,4 @@
-name: HENACY host and native Settings regression
+name: DEXCore current-only host and native Settings regression
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify HENACY and original HEN payload selection
+      - name: Verify DEXCore single-version payload selection
         run: npm test
       - name: Verify native System Information
         run: npm run test:native

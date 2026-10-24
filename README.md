@@ -4,7 +4,7 @@
 
 **Website:** https://aztecyt2022.github.io/PS413.52EXPTST/
 
-The default host loads the actual DEXCore native Settings payload, **not just a renamed web page**. Its previous verified HENACY binary and original HEN remain unmodified for rollback (`?legacy=1` and `?original=1`).
+The host offers **one current selectable version: DEXCore v1**. Obsolete version parameters and older-build links no longer select HENACY or original HEN. The existing source binaries are kept as internal build/verification inputs but are not offered in the host menu.
 
 ## FTP server in the PS4 Settings menu
 
@@ -14,4 +14,4 @@ The verified DEXCore native menu candidate is now promoted to `loader/dexcore.bi
 
 If your PS4 still displays an old HNCY/HENACY entry, use the [verified on-console plugin repair kit](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-plugin-repair.yml). The previous installed `/data/hen/plugin_mono.prx` can retain and regenerate outdated Settings text. The kit backs up that PRX before replacement. Do not install without working recovery access.
 
-The discontinued VSH/XMB overlay is not being restored. If you previously installed a VSH test plugin, restore your console-specific `plugin_mono.prx` backup and reboot before testing DEXCore.
+The discontinued VSH/XMB overlay is not being restored. `?original=1`, `?legacy=1`, `?henacy=1` and `?vsh=1` now all use DEXCore v1. If you previously installed a VSH test plugin, restore your console-specific `plugin_mono.prx` backup and reboot before testing DEXCore.

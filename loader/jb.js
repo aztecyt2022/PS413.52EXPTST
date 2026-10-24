@@ -47,7 +47,7 @@ function finishUI(ok) {
   const m = document.getElementById("msg");
   if (m)
     m.textContent = ok
-      ? window.HEN_BUILD.original ? "HEN payload started" : "DEXCore payload started"
+      ? "DEXCore payload started"
       : armedEver
         ? "Restart your console"
         : "Exploit did not complete — see diagnostic log below";

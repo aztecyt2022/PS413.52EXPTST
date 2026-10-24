@@ -12,7 +12,7 @@ const lifetime=8*60*60*1000;
 const promoted=existsSync(new URL('loader/dexcore.bin',root));
 const expectedDefaultPayload=promoted?'loader/'+read('payloads.js').match(/\["(dexcore\.bin\?v=[^"]+)",500448/)[1]:'loader/henacy.bin?v=1-syslogo-ea1235b846b0';
 
-function environment(ua,{original=false,henacy=false,session=new Map(),preference=new Map(),corrupt=false,storageBlocked=false}={}){
+function environment(ua,{search='',session=new Map(),preference=new Map(),corrupt=false,storageBlocked=false}={}){
   const nodes=new Map(),intervals=new Map(),navigation=[],requests=[],pending=[],modules=[];let now=0,next=0;
   function node(id){if(!nodes.has(id))nodes.set(id,{textContent:'',value:'',hidden:id==='hostPanel',disabled:id==='loadExploit'||id==='toggleAuto',handlers:{},focus(){},addEventListener(type,fn){this.handlers[type]=fn;},click(){if(!this.disabled)this.handlers.click?.();},submit(){this.handlers.submit?.({preventDefault(){}});}});return nodes.get(id);}
   const storage=map=>({getItem(k){if(storageBlocked)throw Error('storage');return map.get(k)||null;},setItem(k,v){if(storageBlocked)throw Error('storage');map.set(k,v);},removeItem(k){map.delete(k);}});
@@ -21,7 +21,7 @@ function environment(ua,{original=false,henacy=false,session=new Map(),preferenc
     open(_method,path){this.path=path;requests.push(path);}
     send(){pending.push(Promise.resolve().then(()=>{this.status=200;const data=bytes(this.path);if(corrupt&&this.path.split('?')[0].endsWith('.bin')&&!this.path.includes('patches/'))data[data.length-1]^=1;this.response=data.buffer;this.onload();}));}
   }
-  const context=vm.createContext({HEN_CONFIG:{passwordHash:testHash},navigator:{userAgent:ua},document:{getElementById:node,createElement:()=>({}),head:{appendChild:element=>modules.push(element)}},sessionStorage:storage(session),localStorage:storage(preference),location:{search:henacy?'?henacy=1':original?'?original=1':'',assign:path=>navigation.push(path),replace:path=>navigation.push(path)},XMLHttpRequest:XHR,Date:FakeDate,Uint8Array,ArrayBuffer,DataView,Int32Array,Promise,unescape,encodeURIComponent,setInterval:fn=>{intervals.set(++next,fn);return next;},clearInterval:id=>intervals.delete(id)});
+  const context=vm.createContext({HEN_CONFIG:{passwordHash:testHash},navigator:{userAgent:ua},document:{getElementById:node,createElement:()=>({}),head:{appendChild:element=>modules.push(element)}},sessionStorage:storage(session),localStorage:storage(preference),location:{search,assign:path=>navigation.push(path),replace:path=>navigation.push(path)},XMLHttpRequest:XHR,Date:FakeDate,Uint8Array,ArrayBuffer,DataView,Int32Array,Promise,unescape,encodeURIComponent,setInterval:fn=>{intervals.set(++next,fn);return next;},clearInterval:id=>intervals.delete(id)});
   context.window=context;
   for(const script of ['sha256.js','auth.js','device.js','payloads.js','app.js','entry.js'])vm.runInContext(read(script),context,{filename:script});
   return {context,node,intervals,navigation,requests,modules,session,login(password=testPassword){node('password').value=password;node('loginForm').submit();},async settle(){await Promise.all(pending);await new Promise(resolve=>setImmediate(resolve));},async advance(ms){now+=ms;for(const fn of [...intervals.values()])fn();await this.settle();},loadEntry(){vm.runInContext(read('loader/entry.js'),context);}};
@@ -32,38 +32,28 @@ assert.equal(gated.node('hostPanel').hidden,true);assert.equal(gated.intervals.s
 await gated.advance(30000);assert.equal(gated.requests.length,0);
 gated.login('wrong');assert.equal(gated.node('hostPanel').hidden,true);assert.match(gated.node('loginError').textContent,/Incorrect password/);assert.equal(gated.node('password').value,'');
 gated.login();assert.equal(gated.node('hostPanel').hidden,false);assert.equal(gated.node('loginPanel').hidden,true);assert.equal(gated.node('loadExploit').disabled,false);assert.match(gated.node('status').textContent,/10 seconds/);
-await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html?v=dexcore-v1-diag-4'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
+await gated.advance(9999);assert.equal(gated.requests.length,0);await gated.advance(1);assert.deepEqual(gated.navigation,['loader/jb.html?v=dexcore-v1-current-only-1'],JSON.stringify({requests:gated.requests,status:gated.node('status').textContent}));
 console.log('PASS: no countdown or launch before password entry; wrong password gives feedback; correct password starts ten seconds.');
 
 const session=new Map(),preference=new Map(),disabled=environment(ps4('13.52'),{session,preference});
 disabled.login();disabled.node('toggleAuto').click();await disabled.advance(30000);assert.equal(disabled.requests.length,0);
 const remembered=environment(ps4('13.52'),{session,preference});assert.equal(remembered.node('hostPanel').hidden,false);assert.equal(remembered.intervals.size,0);assert.equal(remembered.node('toggleAuto').textContent,'Enable auto loading');
-remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html?v=dexcore-v1-diag-4']);
+remembered.node('loadExploit').click();await remembered.settle();assert.deepEqual(remembered.navigation,['loader/jb.html?v=dexcore-v1-current-only-1']);
 remembered.node('logout').click();assert.equal(remembered.context.HEN_AUTH.allowed(),false);assert.equal(remembered.navigation.at(-1),'./');
 const blockedStorage=environment(ps4('13.52'),{storageBlocked:true});blockedStorage.login();assert.equal(blockedStorage.node('hostPanel').hidden,true);assert.match(blockedStorage.node('loginError').textContent,/storage/);
 console.log('PASS: remembered auto-load preference, manual launch, session restoration, logout, and storage failure feedback.');
 
+
 for(const ua of ['Desktop browser',ps4('13.50'),ps4('14.00'),ps4('13.52.1'),ps4('13.520'),'Mozilla/5.0 (PlayStation 5 13.52)']){
-  for(const option of [{},{henacy:true},{original:true}]){const unsupported=environment(ua,option);unsupported.login();assert.equal(unsupported.node('loadExploit').disabled,true);assert.equal(unsupported.node('toggleAuto').disabled,true);await unsupported.advance(60000);assert.equal(unsupported.requests.length,0);unsupported.loadEntry();assert.equal(unsupported.modules.length,0);}
+  for(const search of ['', '?original=1', '?legacy=1']){const unsupported=environment(ua,{search});unsupported.login();assert.equal(unsupported.node('loadExploit').disabled,true);assert.equal(unsupported.node('toggleAuto').disabled,true);await unsupported.advance(60000);assert.equal(unsupported.requests.length,0);unsupported.loadEntry();assert.equal(unsupported.modules.length,0);}
 }
-for(const option of [{},{original:true},{henacy:true}]){const corrupt=environment(ps4('13.52'),{...option,corrupt:true});corrupt.login();corrupt.node('loadExploit').click();await corrupt.settle();assert.equal(corrupt.navigation.length,0);assert.match(corrupt.node('status').textContent,/verification failed/);assert.equal(corrupt.intervals.size,0);}
-const original=environment(ps4('13.52'),{original:true});original.login();
-assert.equal(original.node('hostTitle').textContent,'PS4 HEN 2.2.0');
-assert.equal(original.node('switchBuild').textContent,'Use DEXCore v1');
-assert.equal(original.node('switchBuild').href,'./');
-assert.equal(original.node('diagnostics').href,'loader/diagnostics.html?original=1');
-original.node('loadExploit').click();await original.settle();
-assert.deepEqual(original.navigation,['loader/jb.html?original=1&v=dexcore-v1-diag-4']);
-assert.equal(original.requests[0],'loader/hen.bin');
-const henacy=environment(ps4('13.52'),{henacy:true});henacy.login();
-assert.equal(henacy.node('hostTitle').textContent,'DEXCore v1');
-assert.equal(henacy.node('switchBuild').href,'?original=1');
-assert.equal(henacy.node('diagnostics').href,'loader/diagnostics.html');
-assert.equal(henacy.node('switchBuild').textContent,'Use original HEN');
-await henacy.advance(10000);
-assert.deepEqual(henacy.navigation,['loader/jb.html?v=dexcore-v1-diag-4']);
-assert.equal(henacy.requests[0],expectedDefaultPayload);
-assert.equal(gated.node('switchBuild').href,'?original=1');
+for(const search of ['', '?original=1', '?legacy=1']){const corrupt=environment(ps4('13.52'),{search,corrupt:true});corrupt.login();corrupt.node('loadExploit').click();await corrupt.settle();assert.equal(corrupt.navigation.length,0);assert.match(corrupt.node('status').textContent,/verification failed/);assert.equal(corrupt.intervals.size,0);}
+const current=environment(ps4('13.52'));current.login();
+assert.equal(current.node('hostTitle').textContent,'DEXCore v1');
+assert.equal(current.node('diagnostics').href,'loader/diagnostics.html');
+await current.advance(10000);
+assert.deepEqual(current.navigation,['loader/jb.html?v=dexcore-v1-current-only-1']);
+assert.equal(current.requests[0],expectedDefaultPayload);
 assert.equal(gated.requests[0],expectedDefaultPayload);
 if(promoted){
   assert.equal(gated.context.HEN_BUILD.payload[2],createHash('sha256').update(bytes('loader/dexcore.bin')).digest('hex'));
@@ -81,29 +71,25 @@ if(promoted){
 assert.equal(gated.node('hostTitle').textContent,'DEXCore v1');
 assert.equal(gated.context.document.title,'DEXCore v1');
 if(promoted) assert.equal(gated.context.HEN_BUILD.payload[0].split('?')[0],'dexcore.bin');
-for(const env of [gated,original,henacy]){
+for(const env of [gated,current]){
   const declaration=read('loader/jb.js').match(/const PAYLOAD_FILE = ([^;]+);/)[1];
   assert.equal(vm.runInContext(declaration,env.context),env.context.HEN_BUILD.payload[0]);
 }
-const guestOriginal=environment(ps4('13.52'),{original:true});guestOriginal.loadEntry();
-assert.deepEqual(guestOriginal.navigation,['../index.html?original=1']);
-const guestHenacy=environment(ps4('13.52'),{henacy:true});guestHenacy.loadEntry();
-assert.equal(guestHenacy.context.document.title,'DEXCore v1');
-assert.equal(guestHenacy.node('loginTitle').textContent,'DEXCore v1');
-assert.deepEqual(guestHenacy.navigation,['../index.html']);
-console.log('PASS: exact PS4 13.52 guard; DEXCore brand, payload selection and rollback are consistent; original HEN selection and existing HENACY links load matching payloads; corrupt payloads stop all launch paths.');
-
-// Retired VSH links must never select a removed binary.
-for(const [search,expected] of [['?vsh=1','DEXCore v1'],['?vsh=10','DEXCore v1'],
-                                  ['?original=1&vsh=1','PS4 HEN 2.2.0'],
-                                  ['?henacy=1&vsh=1','DEXCore v1']]){
+const guestLegacy=environment(ps4('13.52'),{search:'?legacy=1'});guestLegacy.loadEntry();
+assert.deepEqual(guestLegacy.navigation,['../index.html']);
+assert.equal(guestLegacy.context.document.title,'DEXCore v1');
+for(const search of ['?original=1','?legacy=1','?henacy=1','?vsh=1','?original=1&legacy=1','?vsh=1&original=1']){
   const c=vm.createContext({location:{search}});c.window=c;
   vm.runInContext(read('payloads.js'),c);
-  assert.equal(c.HEN_BUILD.label,expected);
-  assert(!c.HEN_BUILD.payload[0].includes('builds/vsh'));
-  assert.equal(c.HEN_BUILD.query,search.includes('original=1')&&!search.includes('henacy=1')?'?original=1':'');
+  assert.equal(c.HEN_BUILD.label,'DEXCore v1');
+  assert.equal(c.HEN_BUILD.original,false);
+  assert.equal(c.HEN_BUILD.query,'');
+  assert.equal(c.HEN_BUILD.payload[0],gated.context.HEN_BUILD.payload[0]);
 }
-console.log('PASS: retired VSH query falls back to default DEXCore / explicitly selected original HEN.');
+const singleVersionHTML=read('index.html');
+assert(!/id="switchBuild"|href="\\?(?:original|legacy)=1"/.test(singleVersionHTML));
+assert(!/hen\\.bin|henacy\\.bin/.test(read('payloads.js')));
+console.log('PASS: exactly one DEXCore build is selectable; legacy query parameters cannot load old HEN payloads; PS4 13.52 gate and integrity checks retained.');
 
 const guestLoader=environment(ps4('13.52'));guestLoader.loadEntry();assert.deepEqual(guestLoader.navigation,['../index.html']);assert.equal(guestLoader.modules.length,0);
 const allowedLoader=environment(ps4('13.52'));allowedLoader.login();allowedLoader.loadEntry();assert.equal(allowedLoader.modules.length,1);assert.match(allowedLoader.modules[0].src,/^jb.js\?/);
@@ -176,7 +162,7 @@ for(const page of ['index.html','loader/jb.html'])for(const match of read(page).
 }
 assert.match(read('loader/diagnostics.html'),/It does not start the exploit or modify the console/);
 assert(existsSync(new URL('.nojekyll',root)));assert(existsSync(new URL('README.md',root)),'README should exist');assert.doesNotMatch(read('config.js'),/local-test-password/);
-console.log('PASS: HENACY and original payload hashes match; patch bytes preserved; independent checksums match; HTML asset paths work under a project subdirectory.');
+console.log('PASS: internal source/reference payload hashes match; 13.52 patch preserved; all paths work under a project subdirectory.');
 
 const retiredBrand=['PRO','HEN'].join('');
 for(const path of ['README.md','index.html','loader/jb.html','loader/diagnostics.html','entry.js','payloads.js'])

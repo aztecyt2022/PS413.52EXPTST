@@ -12,9 +12,6 @@
     started=true;
     var build=window.HEN_BUILD;
     document.getElementById("hostTitle").textContent=build.label;
-    var link=document.getElementById("switchBuild");
-    link.href=build.original||build.legacy?"./":"?original=1";
-    link.textContent=build.original||build.legacy?"Use DEXCore v1":"Use original HEN";
     var diagnosticLink=document.getElementById("diagnostics");
     if(diagnosticLink)diagnosticLink.href="loader/diagnostics.html"+build.query;
     password.value="";error.textContent="";login.hidden=true;host.hidden=false;
