@@ -50,3 +50,24 @@ PRXs or live firmware 13.52 operation.
 The old site FTPS4 payload should be removed only when the compiled native
 replacement is ready; disabling it prematurely leaves existing users
 without an FTP recovery route.
+
+## Verified native build candidate (GitHub Actions)
+
+The OpenOrbis workflow **successfully compiled** a native `plugin_server.prx`
+and `plugin_mono.prx`. The first inspected output had these measurements:
+
+- `plugin_server.prx`: 94,336 bytes, SHA-256 `8aa5b860d3f736657f8d33d93eba300aa071697fed6fb15f6c741b3c0b2aa37a`
+- `plugin_mono.prx`: 157,920 bytes, SHA-256 `08f2130341e175f5b0cd8020a48d5bc06e90cad3aee9569e04bc1eb4c553d32b`
+
+The currently embedded `plugin_mono.prx` reserves **141,152 bytes**,
+so the newer module cannot be safely substituted with the current
+size-preserving patch. The PRX candidates have no PS4 firmware 13.52
+hardware-compatibility verification. Rebuilding the parent HEN payload and
+retaining its existing DEXCORE-specific System Information hooks are required
+before any live replacement. Do not place test PRXs over a working console's
+modules without a known, independently accessible recovery route.
+
+The standalone FTPS4 browser payload is intentionally retained as a
+migration/recovery fallback until a usable native replacement is published.
+It is not part of the new native FTP implementation, and the new FTP toggle
+is not currently visible or working in the live DEXCORE release.

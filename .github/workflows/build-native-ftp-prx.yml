@@ -51,6 +51,32 @@ jobs:
           test -s bin/plugins/prx/plugin_server.prx
           test -s bin/plugins/prx/plugin_mono.prx
           sha256sum bin/plugins/prx/plugin_server.prx bin/plugins/prx/plugin_mono.prx
+      - name: Write non-deployable compatibility manifest
+        run: |
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          mono=Path("hen-plugins/bin/plugins/prx/plugin_mono.prx")
+          server=Path("hen-plugins/bin/plugins/prx/plugin_server.prx")
+          def info(path):
+              data=path.read_bytes()
+              return {"bytes":len(data),"sha256":hashlib.sha256(data).hexdigest()}
+          manifest={
+              "name":"DEXCORE native HEN FTP PRX candidate",
+              "tested_on_real_ps4_13_52":False,
+              "installed_on_user_console":False,
+              "ftp_default_enabled":False,
+              "ftp_port":2121,
+              "ftp_connect_notification":True,
+              "native_mono_original_embedded_slot_bytes":141152,
+              "plugin_mono":info(mono),
+              "plugin_server":info(server),
+              "can_patch_current_flat_hen_payload_in_place":len(mono.read_bytes())<=141152,
+              "current_live_host_uses_these_new_prxs":False
+          }
+          Path("native-ftp-build-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+          print(json.dumps(manifest,indent=2))
+          PY
       - name: Publish native test binaries only
         uses: actions/upload-artifact@v4
         with:
@@ -59,5 +85,6 @@ jobs:
             hen-plugins/bin/plugins/prx/plugin_server.prx
             hen-plugins/bin/plugins/prx/plugin_mono.prx
             native/ftp-control/README.md
+            native-ftp-build-manifest.json
           retention-days: 30
           if-no-files-found: error

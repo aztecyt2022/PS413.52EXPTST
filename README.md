@@ -4,6 +4,20 @@
 
 DEXCORE 1.1 is a PS4 13.52 homebrew host with a new red, hacker-terminal interface. The public brand is **DEXCORE**; the release number **1.1** is shown separately. The user-provided blue neon DEXCORE PS4 HEN emblem replaces the old H logo on the host and, in an optimized same-size format, in the native PS4 Settings plugin.
 
+## Native HEN FTP rewrite — staged, not yet deployed
+
+DEXCORE now contains a new [native HEN FTP implementation](native/ftp-control/README.md)
+with a real independent Settings toggle, default-off startup, server enable/
+disable, TCP **2121**, and notifications for the server's listening IP/port
+and connecting clients. Its portable supervisor test and OpenOrbis PRX build
+pass, but its new Settings PRX **exceeds the existing embedded binary slot**.
+Consequently the new PRXs **have not replaced** the live 13.52 payload,
+and their runtime behavior remains untested on actual PS4 firmware.
+
+The existing FTPS4 upload and website launch remain temporarily available
+only to avoid stranding consoles without an FTP recovery method. This does
+**not** complete removal of FTPS4 from the deployed version yet.
+
 ## Working host features retained
 
 - Password gate, per-session access and authenticated logout
