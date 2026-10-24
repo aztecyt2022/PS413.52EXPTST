@@ -27,7 +27,7 @@ if not b"DEXCORE" in hen or b"ftp_enabled" not in hen or b"Native HEN FTP" not i
     raise ValueError("Native FTP menu and DEXCORE branding not embedded")
 if b"FTPS4: TCP 1337" in hen or b"FTPS4 Server ready" in hen:
     raise ValueError("Standalone FTPS4 appears in the rebuilt native HEN")
-if b"DEXCORE 1.1 enabled" not in hen:
+if b"DEXCORE %s enabled" not in hen:
     raise ValueError("New installer welcome message missing")
 if b"DEXCORE restarting %s" not in hen:
     raise ValueError("Installer restart message missing")
