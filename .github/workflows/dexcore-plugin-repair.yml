@@ -1,14 +1,6 @@
-name: DEXCore on-console ShellUI plugin repair kit
+name: Manual legacy fixed-size ShellUI plugin repair kit
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'loader/dexcore.bin'
-      - 'shellui/hen_settings.xml'
-      - 'scripts/prepare-dexcore-plugin.py'
-      - 'scripts/repair-dexcore-plugin.py'
-      - '.github/workflows/dexcore-plugin-repair.yml'
   workflow_dispatch:
 
 permissions:
@@ -19,9 +11,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Extract exact installed-module replacement from SHA-verified payload
+      - name: Recreate the archived fixed-size payload before extracting its PRX
         run: |
-          python3 scripts/prepare-dexcore-plugin.py
+          python3 scripts/build-shellui-preview.py --output /tmp/dexcore-legacy-fixed-size.bin
+          python3 scripts/prepare-dexcore-plugin.py --source /tmp/dexcore-legacy-fixed-size.bin
           python3 -m compileall -q scripts/repair-dexcore-plugin.py
       - name: Preserve recovery guide and installer alongside checked PRX
         run: |
@@ -29,7 +22,7 @@ jobs:
           cp docs/dexcore-plugin-repair.md dist/dexcore-plugin-repair/README.md
       - uses: actions/upload-artifact@v4
         with:
-          name: DEXCore-13.52-ShellUI-Plugin-Repair
+          name: DEXCore-13.52-LEGACY-Fixed-Size-Plugin-Repair
           path: dist/dexcore-plugin-repair/
           if-no-files-found: error
           retention-days: 30
