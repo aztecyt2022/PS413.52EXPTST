@@ -19,6 +19,8 @@ int dexcore_overlay_enabled(void);
 int dexcore_overlay_set_enabled(int enabled);
 int dexcore_overlay_get_frame(DexcoreOverlayFrame *out);
 void dexcore_overlay_ui_install(void);
+int dexcore_overlay_ui_installed(void);
+void dexcore_overlay_ui_queue_toggle(const void *element);
 const char *dexcore_overlay_ui_status(void);
 #ifdef __cplusplus
 }

@@ -39,7 +39,7 @@ window.startHENHost=function () {
     statusText.textContent="Checking exploit files…";
     Promise.all(files.map(fileCheck)).then(function(){
       statusText.textContent="Loading exploit…";
-      window.location.assign("loader/jb.html"+build.query+(build.query?"&":"?")+"v=dexcore-ui-1-1");
+      window.location.assign("loader/jb.html"+build.query+(build.query?"&":"?")+"v=dexcore-ui-test3");
     }).catch(function(error){
       busy=false;loadButton.disabled=!supported;autoButton.disabled=!supported;
       statusText.textContent=error.message+" Auto loading is stopped.";

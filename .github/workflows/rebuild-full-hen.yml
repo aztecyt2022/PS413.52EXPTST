@@ -88,7 +88,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "Full DEXCORE payload and hash already current"
           else
-            git commit -m "Deploy DEXCORE 1.1 TEST 2 native system overlay payload"
+            git commit -m "Deploy DEXCORE 1.1 TEST 3 native system overlay payload"
             git pull --rebase origin main
             git push origin HEAD:main
           fi

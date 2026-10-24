@@ -7,11 +7,12 @@
 #include <stdlib.h>
 
 struct Class {const char *name;Class *parent;};
-struct Object {Class *klass;Object *parent,*reference;Object *children[8];unsigned count;int initialized;char text[1024];int visible;};
+struct Object {Class *klass;Object *parent,*reference;Object *children[8];unsigned count;int initialized;char text[1024];int visible;int rendering_order;};
 struct Method {Class *klass;char name[64];int setter;};
 static Class widget={"Widget",nullptr},panel={"Panel",&widget},label={"Label",&widget};
 static Class scene={"Scene",nullptr},font={"UIFont",nullptr},color={"UIColor",nullptr};
 static Class area_type={"AreaManager",nullptr},layer={"LayerManager",nullptr},string_type={"String",nullptr};
+static Class setting_type={"SettingElement",nullptr};
 static Object game_root={&widget},top_root={&widget},next_root={&widget};
 static Object game_scene={&scene},top_scene={&scene},area_object={&area_type};
 static Object *handles[2048];static unsigned handle_next=1,live_handles;
@@ -26,7 +27,9 @@ void *Root_Domain=(void*)1,*App_Exe=(void*)2,*MSCorlib=(void*)3;
 uint64_t sceKernelGetProcessTime(void){return clock_us;}
 char *sceKernelGetFsSandboxRandomWord(void){return (char*)"sandbox";}
 int dexcore_overlay_enabled(void){return input.enabled;}
+int dexcore_overlay_set_enabled(int value){input.enabled=value;++input.revision;return 1;}
 int dexcore_overlay_get_frame(DexcoreOverlayFrame *out){*out=input;return 1;}
+void *dexcore_mono_loaded_image(const char*){return (void*)4;}
 void *mono_get_image(const char*){return (void*)4;}
 void *mono_class_from_name(const void*,const char*,const char *name)
 {
@@ -43,6 +46,9 @@ void *mono_class_get_method_from_name(const void *klass,const char *name,int)
 }
 void *mono_class_get_property_from_name(const void *klass,const char *name)
 {
+    /* Layout setters belong to concrete UI2 controls, not generic Widget. */
+    if(klass==&widget && (!strcmp(name,"X") || !strcmp(name,"Y") ||
+                         !strcmp(name,"Width") || !strcmp(name,"Height")))return nullptr;
     return mono_class_get_method_from_name(klass,name,0);
 }
 void *mono_property_get_get_method(const void *prop){return (void*)prop;}
@@ -53,6 +59,9 @@ void *mono_object_new(const void*,const void *klass)
 }
 int mono_class_is_valuetype(const void *klass){return klass==&font || klass==&color;}
 void *mono_object_unbox(const void *object){return (void*)object;}
+void *mono_object_get_class(const void *object){return ((Object*)object)->klass;}
+char *mono_string_to_utf8(const void *object){return strdup(((Object*)object)->text);}
+void mono_free(const void *object){free((void*)object);}
 uint32_t mono_gchandle_new(void *object,int pinned)
 {
     assert(pinned==1);assert(handle_next<2048);handles[handle_next]=((Object*)object);++live_handles;return handle_next++;
@@ -69,6 +78,8 @@ void *mono_runtime_invoke(const void *method_ptr,const void *instance,const void
     assert(pthread_equal(pthread_self(),ui_thread));Method *m=(Method*)method_ptr;Object *object=(Object*)instance;
     if(m->setter) {
         if(!strcmp(m->name,"Visible"))object->visible=*(const bool*)args[0];
+        if(!strcmp(m->name,"RenderingOrder"))object->rendering_order=*(const int*)args[0];
+        if(!strcmp(m->name,"Value"))object->reference=(Object*)args[0];
         if(!strcmp(m->name,"Text")) {
             if(reject_text){*exc=(void*)99;return nullptr;}
             assert(object->initialized);assert(((Object*)args[0])->klass==&string_type);
@@ -97,6 +108,7 @@ void *mono_runtime_invoke(const void *method_ptr,const void *instance,const void
     if(!strcmp(m->name,"GetTopScene"))return &top_scene;
     if(!strcmp(m->name,"FindContainerSceneByPath")){assert(!strcmp(((Object*)args[0])->text,"Game"));return &game_scene;}
     if(!strcmp(m->name,"RootWidget"))return object->reference;
+    if(!strcmp(m->name,"Value"))return object->reference;
     assert(!"unexpected managed UI call");return nullptr;
 }
 }
@@ -110,6 +122,7 @@ int main(void)
     missing_panel=1;step();assert(!game_root.count && !top_root.count && !live_handles);
     missing_panel=0;step();assert(game_root.count==1 && top_root.count==1);assert(live_handles==7);
     assert(strstr(game_root.children[0]->children[0]->text,"62 C"));assert(text_updates==2);
+    assert(game_root.children[0]->rendering_order==1 && top_root.children[0]->rendering_order==1);
     step();assert(text_updates==2 && live_handles==7);
     ++input.revision;snprintf(input.text,sizeof(input.text),"CPU: 63 C\nFan: 51%%");step();assert(text_updates==4);
     top_scene.reference=&next_root;step();assert(!top_root.count && next_root.count==1 && live_handles==7);
@@ -122,6 +135,15 @@ int main(void)
     for(int i=0;i<3;i++){step();assert(!game_root.count && live_handles==1);}
     reject_text=0;step();assert(game_root.count==1 && live_handles==4);
     input.enabled=0;render_tick();assert(!game_root.count && live_handles==1);
+    /* Input handlers may run before the framework applies the visible value. */
+    Object element={&setting_type};element.initialized=1;
+    element.reference=(Object*)Mono_New_String("0");
+    dexcore_overlay_ui_queue_toggle(&element);assert(!input.enabled);
+    element.reference=(Object*)Mono_New_String("1");step();
+    assert(input.enabled && game_root.count==1 && live_handles==4);
+    dexcore_overlay_ui_queue_toggle(&element);
+    element.reference=(Object*)Mono_New_String("0");step();
+    assert(!input.enabled && !game_root.count && live_handles==1);
     puts("PASS: actual renderer attaches to Game/ShellUI roots, updates text, survives scene changes, avoids duplicate roots, frees panel handles on Off and retries caught UI exceptions");
     return 0;
 }

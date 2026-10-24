@@ -19,6 +19,7 @@ extern "C"
 #include "memory.h"
 #include "mono.h"
 #include "system_overlay.h"
+#include "mono_bootstrap.h"
 
 #include "patches.h"
 
@@ -75,6 +76,7 @@ static void MainThreadCheck(void)
 
 void PrintTimeTick(void)
 {
+    dexcore_mono_bootstrap_step();
     dexcore_overlay_ui_install();
     static bool once = false;
     if (!once)
@@ -173,26 +175,14 @@ static int sceKernelLoadStartModuleInternalForMono_Hook(const char* param_1, voi
         RunPost(md);
         test = true;
     }
-    else if (test)
+    if (test && app_exe_h>0)
     {
-        if (app_exe_h > 0)
+        static bool once=false;
+        dexcore_mono_bootstrap_step();
+        if(!once && Root_Domain && App_Exe)
         {
-            static bool once = false;
-            if (!Root_Domain)
-            {
-                Root_Domain = mono_get_root_domain();
-            }
-            else if (!once && Root_Domain && !App_Exe)
-            {
-                App_Exe = mono_get_image("/app0/psm/Application/app.exe");
-                if (App_Exe)
-                {
-                    ffinal_printf("app_exe: 0x%p\n", App_Exe);
-                    UploadNewPkgInstallerPath(App_Exe, app_exe_h);
-                    UploadOnBranch(App_Exe);
-                    once = true;
-                }
-            }
+            once=true;
+            UploadNewPkgInstallerPath(App_Exe,app_exe_h);
         }
     }
     return md;
@@ -233,6 +223,8 @@ attr_public int plugin_load(struct SceEntry* args)
     touch_temp(g_pluginName);
     puts(g_pluginVersion);
     UploadMonoCall();
+    if(!dexcore_mono_bootstrap_start())
+        Notify(TEX_ICON_SYSTEM, "DEXCORE native Settings startup failed");
     return 0;
 }
 }

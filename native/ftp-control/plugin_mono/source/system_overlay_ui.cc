@@ -7,9 +7,9 @@
 extern "C" {
 #include "mono.h"
 #include "system_overlay.h"
+#include "mono_bootstrap.h"
+#include "overlay_hook.h"
 #ifndef DEXCORE_OVERLAY_UI_TEST
-#include "../../common/memory.h"
-#include "../../common/HDE/HDE64.h"
 #include <orbis/libkernel.h>
 #else
 #include "overlay_ui_test_api.h"
@@ -24,6 +24,7 @@ extern void *mono_gchandle_get_target(uint32_t);
 extern void mono_gchandle_free(uint32_t);
 extern void *mono_class_get_parent(const void *);
 extern int mono_class_is_valuetype(const void *);
+extern uint32_t mono_method_get_flags(const void *,uint32_t *);
 }
 
 namespace {
@@ -37,7 +38,8 @@ void *area_class,*area_instance_get,*top_scene_method,*game_scene_method,*root_g
 uint32_t game_name_handle;
 int installed;
 pthread_mutex_t install_lock=PTHREAD_MUTEX_INITIALIZER;
-void (*original_begin_render)(void);
+uintptr_t original_begin_render;
+uint32_t pending_toggle;
 uint64_t next_update;
 bool disabled=false;
 bool widgets_ready=false;
@@ -67,7 +69,10 @@ void *property(void *klass,const char *name,bool setter)
 {
     for(void *p=klass;p;p=mono_class_get_parent(p)) {
         void *prop=mono_class_get_property_from_name(p,name);
-        if(prop)return setter?mono_property_get_set_method(prop):mono_property_get_get_method(prop);
+        if(prop) {
+            void *m=setter?mono_property_get_set_method(prop):mono_property_get_get_method(prop);
+            if(m)return m;
+        }
     }
     return nullptr;
 }
@@ -99,12 +104,9 @@ bool resolve_ui(void)
 {
     if(!Root_Domain || !App_Exe)return false;
     if(!ui_image) {
-        const char *sandbox=sceKernelGetFsSandboxRandomWord();
-        if(!sandbox)return false;
         const char *files[]={"Sce.PlayStation.PUI.dll","Sce.PlayStation.HighLevel.UI2.dll"};
         for(unsigned i=0;i<2 && !ui_image;i++) {
-            char path[260];snprintf(path,sizeof(path),"/%s/common/lib/%s",sandbox,files[i]);
-            ui_image=mono_get_image(path);
+            ui_image=dexcore_mono_loaded_image(files[i]);
             if(ui_image) {
                 base_namespace=i?"Sce.PlayStation.HighLevel.UI2":"Sce.PlayStation.PUI";
                 ui_namespace=i?"Sce.PlayStation.HighLevel.UI2":"Sce.PlayStation.PUI.UI2";
@@ -148,13 +150,15 @@ bool create_panel(Slot &slot)
     slot.panel=new_object(panel_class);slot.label=new_object(label_class);
     if(!slot.panel || !slot.label)return false;
     void *panel=target(slot.panel),*label=target(slot.label);
+    int rendering_order=1; /* Native UI2 Panel.RenderingOrder.Last. */
+    set(panel_class,panel,"RenderingOrder",&rendering_order,false);
     float x=24,y=76,width=560,height=208,lx=12,ly=10,lw=536,lh=188;
     bool yes=true;
-    if(!set(widget_class,panel,"Name",Mono_New_String("DEXCORE.SystemInformation")) ||
-       !set(widget_class,panel,"X",&x) || !set(widget_class,panel,"Y",&y) ||
-       !set(widget_class,panel,"Width",&width) || !set(widget_class,panel,"Height",&height) ||
-       !set(widget_class,label,"X",&lx) || !set(widget_class,label,"Y",&ly) ||
-       !set(widget_class,label,"Width",&lw) || !set(widget_class,label,"Height",&lh))return false;
+    if(!set(panel_class,panel,"Name",Mono_New_String("DEXCORE.SystemInformation")) ||
+       !set(panel_class,panel,"X",&x) || !set(panel_class,panel,"Y",&y) ||
+       !set(panel_class,panel,"Width",&width) || !set(panel_class,panel,"Height",&height) ||
+       !set(label_class,label,"X",&lx) || !set(label_class,label,"Y",&ly) ||
+       !set(label_class,label,"Width",&lw,false) || !set(label_class,label,"Height",&lh,false))return false;
     int size=20,style=0,weight=3;
     const void *font_args[]={&size,&style,&weight};
     uint32_t font=new_object(font_class,3,font_args);
@@ -176,6 +180,7 @@ bool create_panel(Slot &slot)
     ok=set(label_class,label,"VerticalAlignment",&align,false) && ok;
     ok=set(label_class,label,"HorizontalAlignment",&align,false) && ok;
     ok=set(label_class,label,"FitHeightToText",&yes,false) && ok;
+    ok=set(label_class,label,"FitWidthToText",&yes,false) && ok;
     const void *args[]={label};
     return ok && invoke(append_method,panel,args);
 }
@@ -211,6 +216,23 @@ bool update_slot(Slot &slot,void *root,const DexcoreOverlayFrame &frame)
 }
 void render_tick(void)
 {
+    /* Read the final toggle value on the next UI frame, after the input event
+     * has completed. OnPress can run before the visible switch changes. */
+    if(pending_toggle) {
+        void *element=target(pending_toggle);
+        void *klass=element?mono_object_get_class(element):nullptr;
+        void *value=nullptr;
+        if(invoke(property(klass,"Value",false),element,nullptr,&value) && value) {
+            char *text=mono_string_to_utf8(value);
+            int enabled=text && text[0]=='1';
+            if(text)mono_free(text);
+            if(!dexcore_overlay_set_enabled(enabled)) {
+                set_status("Unable to save overlay On/Off state");
+                set(klass,element,"Value",Mono_New_String(dexcore_overlay_enabled()?"1":"0"));
+            }
+        } else set_status("Unable to read overlay switch value");
+        release(pending_toggle);
+    }
     if(!dexcore_overlay_enabled()) {
         if(!disabled) {
             bool first=clear_slot(slots[0]);
@@ -250,24 +272,21 @@ void render_tick(void)
 void begin_render(void)
 {
     render_tick();
-    original_begin_render();
+    ((void (*)(void))__atomic_load_n(&original_begin_render,__ATOMIC_ACQUIRE))();
 }
-#ifndef DEXCORE_OVERLAY_UI_TEST
-bool relocatable_prologue(uintptr_t address)
+}
+
+extern "C" void dexcore_overlay_ui_queue_toggle(const void *element)
 {
-    unsigned offset=0;
-    while(offset<14) {
-        hde64s instruction;
-        unsigned length=hde64_disasm((const void *)(address+offset),&instruction);
-        if(!length || instruction.flags&(F_ERROR|F_RELATIVE))return false;
-        /* Existing HEN trampolines do not relocate RIP-relative operands. */
-        if((instruction.flags&F_MODRM) && instruction.modrm_mod==0 && instruction.modrm_rm==5)return false;
-        if(instruction.opcode==0xC3 || instruction.opcode==0xC2)return false;
-        offset+=length;
-    }
-    return true;
+    if(!element)return;
+    uint32_t handle=mono_gchandle_new((void *)element,1);
+    if(!handle)return;
+    release(pending_toggle);pending_toggle=handle;
+    dexcore_overlay_ui_install();
 }
-#endif
+extern "C" int dexcore_overlay_ui_installed(void)
+{
+    return __atomic_load_n(&installed,__ATOMIC_ACQUIRE);
 }
 
 extern "C" const char *dexcore_overlay_ui_status(void)
@@ -277,26 +296,22 @@ extern "C" const char *dexcore_overlay_ui_status(void)
 extern "C" void dexcore_overlay_ui_install(void)
 {
 #ifndef DEXCORE_OVERLAY_UI_TEST
-    pthread_mutex_lock(&install_lock);
+    if(pthread_mutex_trylock(&install_lock))return;
     if(installed){pthread_mutex_unlock(&install_lock);return;}
     if(!resolve_ui()){set_status("Native UI library not ready");pthread_mutex_unlock(&install_lock);return;}
     void *ui=mono_class_from_name(ui_image,base_namespace,"UISystem");
-    void *m=method(ui,"BeginRender",0);
-    uintptr_t address=m?(uintptr_t)mono_aot_get_method(Root_Domain,m):0;
-    if(!address || !relocatable_prologue(address)) {
-        set_status("Unsupported native render hook; overlay not installed");
-        printf("DEXCORE overlay: native BeginRender unavailable or unsafe to relocate\n");
-        pthread_mutex_unlock(&install_lock);return;
+    const char *names[]={"BeginRender","EndRender"};
+    for(unsigned i=0;i<2;i++) {
+        void *m=method(ui,names[i],0);uint32_t flags=0;
+        if(!m || !(mono_method_get_flags(m,&flags)&0x10))continue;
+        uintptr_t address=(uintptr_t)mono_aot_get_method(Root_Domain,m);
+        if(address && dexcore_overlay_hook_install(address,(uintptr_t)begin_render,&original_begin_render)) {
+            __atomic_store_n(&installed,1,__ATOMIC_RELEASE);
+            set_status(i?"Native EndRender ready (TEST 3)":"Native BeginRender ready (TEST 3)");
+            break;
+        }
     }
-    uintptr_t trampoline=CreatePrologueHook(address,14);
-    if(!trampoline){set_status("Native overlay trampoline unavailable");pthread_mutex_unlock(&install_lock);return;}
-    original_begin_render=(void (*)(void))trampoline;
-    uint8_t jump[14]={0xff,0x25,0,0,0,0};
-    uintptr_t destination=(uintptr_t)begin_render;
-    memcpy(jump+6,&destination,sizeof(destination));
-    if(sys_proc_rw(getpid(),address,jump,sizeof(jump),1)==0 && !memcmp((void *)address,jump,sizeof(jump))) {
-        installed=1;set_status("Native overlay renderer ready");
-    } else set_status("Unable to install native overlay render hook");
+    if(!installed)set_status("Unable to resolve or relocate a native render hook");
     pthread_mutex_unlock(&install_lock);
 #endif
 }

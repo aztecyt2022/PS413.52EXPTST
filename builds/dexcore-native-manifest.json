@@ -2,7 +2,7 @@
   "product": "DEXCORE",
   "version": "1.1",
   "fw_target": "13.52",
-  "build_variant": "TEST 2",
+  "build_variant": "TEST 3",
   "build": "full installer recompiled from Scene-Collective PS4-HEN (not fixed-slot patch)",
   "tested_on_hardware": false,
   "native_ftp_port": 2121,
@@ -14,7 +14,14 @@
   "requires_fresh_ps4_boot_for_install": true,
   "standalone_ftps4_embedded": false,
   "system_information_overlay": {
-    "native_renderer": "Mono UI2 widgets in UISystem.BeginRender",
+    "startup_retry_without_later_module_load": true,
+    "toggle_value_read_on_next_ui_frame": true,
+    "relocation": "five-byte branch with relocated RIP/relative operands",
+    "native_renderer": "Mono UI2 widgets on the native render loop",
+    "render_method_candidates": [
+      "BeginRender",
+      "EndRender"
+    ],
     "scenes": [
       "Game container",
       "active ShellUI scene"
@@ -26,34 +33,34 @@
     "console_verified": false
   },
   "payload": {
-    "bytes": 551968,
-    "sha256": "8b6788f165058c2e6a6219907f4b0de4fa373c3f09025f98f3f0cd56eb233553"
+    "bytes": 550848,
+    "sha256": "0756adb98aa27d44543583ac352245226d8fab0511cca00cd496d59d88570d14"
   },
   "embedded_prxs": {
     "plugin_bootloader": {
-      "bytes": 54496,
-      "sha256": "d2a9a4319a3ecb5087e84945b28ff4359ddf80494b5df3ba4d44ab0d5138713b",
-      "offset": 496480
+      "bytes": 54112,
+      "sha256": "be4855727a4cd083b19c73f54e4936d339228e3818a2cca1943771e5b957f863",
+      "offset": 495744
     },
     "plugin_loader": {
-      "bytes": 55312,
-      "sha256": "5dc314f8901174d91c86df6bfc014407f1807ba2742cbd263c91335b936564b9",
-      "offset": 441152
+      "bytes": 54912,
+      "sha256": "d019cb776b083ba53323a0ed3cfefe76496b2ed27b1803effca83752e9199d98",
+      "offset": 440832
     },
     "plugin_mono": {
-      "bytes": 175424,
-      "sha256": "9dfbbc83f5de356d992d04f01c4e6bde9946277890b03bca1e8ffbd7397c968b",
-      "offset": 171168
+      "bytes": 176224,
+      "sha256": "c06dee205d4be3243c6c28b946fab42faeedbce066abad8f97d5f51c0ba96c7f",
+      "offset": 171008
     },
     "plugin_server": {
-      "bytes": 94544,
-      "sha256": "29dd54d637bf0b2f04a4aa716a5ddc1b144a8c2bb1b6cafdb74d4aa21e4bd716",
-      "offset": 346592
+      "bytes": 93600,
+      "sha256": "5c4aa62686f481a1e8c924d4ebe58a6f70aac072a5806c4e8f3b699dc711eae6",
+      "offset": 347232
     },
     "plugin_shellcore": {
       "bytes": 88272,
-      "sha256": "58a1640f68f48861c0a77b01c6a1717518cc1e43223d5342840002ec1f9eca2e",
-      "offset": 82880
+      "sha256": "76f9ea5c34c025e3f99f303e98829d89108cd9c10f28678de9729638bf85cf96",
+      "offset": 82720
     }
   }
 }

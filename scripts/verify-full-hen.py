@@ -35,10 +35,11 @@ if b" | DEXCORE" not in hen:
     raise ValueError("Custom System Information version label missing")
 mono=(folder/"plugin_mono.prx").read_bytes()
 for marker in (b"DEXCORE.SystemInformation", b"UISystem", b"BeginRender",
-               b"Live overlay: updates every second", b"/data/hen/system_information_enabled"):
+               b"Live overlay: updates every second", b"/data/hen/system_information_enabled",
+               b"runtime not attached (TEST 3)", b"Native BeginRender ready (TEST 3)"):
     if marker not in mono:
         raise ValueError("Compiled persistent overlay runtime is missing: "+repr(marker))
-if b"1.1 TEST 2\0" not in hen:
+if b"1.1 TEST 3\0" not in hen:
     raise ValueError("Test build version marker missing")
 server=(folder/"plugin_server.prx").read_bytes()
 for marker in (b"DEXCORE FTP client connected", b"DEXCORE %s client connected",
@@ -50,7 +51,7 @@ if b"Client: %s:%u" in server:
 # Installer is a flat payload. The host runner checks total size and SHA-256.
 result={
     "product":"DEXCORE", "version":"1.1", "fw_target":"13.52",
-    "build_variant":"TEST 2",
+    "build_variant":"TEST 3",
     "build":"full installer recompiled from Scene-Collective PS4-HEN (not fixed-slot patch)",
     "tested_on_hardware":False, "native_ftp_port":2121,
     "ftp_disabled_on_first_install":True,
@@ -61,7 +62,11 @@ result={
     "requires_fresh_ps4_boot_for_install":True,
     "standalone_ftps4_embedded":False,
     "system_information_overlay":{
-        "native_renderer":"Mono UI2 widgets in UISystem.BeginRender",
+        "startup_retry_without_later_module_load":True,
+        "toggle_value_read_on_next_ui_frame":True,
+        "relocation":"five-byte branch with relocated RIP/relative operands",
+        "native_renderer":"Mono UI2 widgets on the native render loop",
+        "render_method_candidates":["BeginRender","EndRender"],
         "scenes":["Game container", "active ShellUI scene"],
         "sampler_interval_ms":1000,
         "ui_scene_check_interval_ms":250,
