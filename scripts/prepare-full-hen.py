@@ -35,4 +35,23 @@ assert "offsets_1352" in contents and "XFAST_SYSCALL_addr" in contents
 config=(root/"hen.ini").read_text()
 assert "enable_plugins = 1" in config
 assert "upload_prx = 1" in config
-print("Prepared DEXCORE full HEN installer with 13.52 offsets; included PRXs are built separately.")
+
+# Upstream build.sh's fallback downloads prebuilt release plugins even when a
+# local PRX directory exists on some build runners. That is unsafe here.
+# Require our five freshly built PRXs; never mix in upstream release archives.
+script=root/"build.sh"
+build=script.read_text()
+start=build.index("SKIP_DOWNLOAD=false")
+end=build.index("# need to use translation units to force rebuilds",start)
+build=build[:start]+"""for prx in \${PRX_FILES}; do
+  if [ ! -s "$prx" ]; then
+    echo "Missing freshly compiled native HEN module: $prx" >&2
+    exit 4
+  fi
+done
+echo "Bundling exact local DEXCORE PRXs; no upstream plugin downloads."
+
+"""+build[end:]
+script.write_text(build)
+
+print("Prepared DEXCORE full HEN installer with 13.52 offsets and no upstream PRX downloads.")
