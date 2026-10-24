@@ -1,0 +1,26 @@
+name: DEXCORE native FTP source contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'native/ftp-control/**'
+      - '.github/workflows/native-ftp-source.yml'
+  workflow_dispatch:
+
+jobs:
+  linux-supervisor-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile actual native FTP supervisor with stubbed PS4 server
+        run: |
+          gcc -std=gnu11 -Wall -Wextra -Werror -pthread \
+            -DDEXCORE_FTP_CONTROL_FILE='"/tmp/dexcore-native-ftp-ci-state"' \
+            -I native/ftp-control/plugin_server/source \
+            native/ftp-control/plugin_server/source/ftp_runtime.c \
+            native/ftp-control/tests/supervisor_test.c \
+            -o /tmp/dexcore-ftp-supervisor-test
+          /tmp/dexcore-ftp-supervisor-test
+      - name: Verify native source linkage, notifications, and XML controls
+        run: python3 native/ftp-control/tests/check_source.py
