@@ -206,7 +206,7 @@ for(const page of ['index.html','loader/jb.html'])for(const match of read(page).
   const url=match[1];if(url==='data:,'||/^https?:\/\//.test(url))continue;assert(!url.startsWith('/'),'absolute path breaks a project Pages site: '+url);assert(existsSync(new URL(url,new URL(page,root))),url);
 }
 assert.match(read('index.html'),/ENABLE FTPS4 :1337/);
-assert.match(read('index.html'),/ftp-control\\.py/);
+assert.match(read('index.html'),/ftp-control\.py/);
 assert.match(read('tools/ftp-control.py'),/SHUTDOWN/);
 assert.match(read('docs/shellui-menus.md'),/native control backend/);
 assert.match(read('loader/diagnostics.html'),/It does not start the exploit or modify the console/);
