@@ -43,7 +43,7 @@ script=root/"build.sh"
 build=script.read_text()
 start=build.index("SKIP_DOWNLOAD=false")
 end=build.index("# need to use translation units to force rebuilds",start)
-build=build[:start]+"""for prx in \${PRX_FILES}; do
+build=build[:start]+"""for prx in ${PRX_FILES}; do
   if [ ! -s "$prx" ]; then
     echo "Missing freshly compiled native HEN module: $prx" >&2
     exit 4
