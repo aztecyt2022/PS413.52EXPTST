@@ -63,7 +63,7 @@ if(promoted){
   assert(dexcore.includes(Buffer.from('FTP Server')));
   if(dexcore.includes(Buffer.from('ftpsrv a717ffd'))){
     assert(dexcore.includes(Buffer.from('DEXCore already loaded. Skipping...')));
-    assert(dexcore.includes(Buffer.from('DEXCore FTP (ftpsrv a717ffd)')));
+    assert(dexcore.includes(Buffer.from('FTP Server + Plugins')));
     assert(!dexcore.includes(Buffer.from('HNCY restarting')));
     assert(!dexcore.includes(Buffer.from('HENACY already installed')));
   }

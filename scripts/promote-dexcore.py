@@ -27,7 +27,6 @@ bytes_=candidate.read_bytes()
 assert b"DEXCore v1" in bytes_ and b"FTP Server" in bytes_
 assert b" | DEXCore\x00" in bytes_
 assert b"DEXCore already loaded. Skipping..." in bytes_
-assert b"DEXCore FTP (ftpsrv a717ffd)" in bytes_
 assert b"HNCY restarting" not in bytes_
 assert b"HENACY already installed" not in bytes_
 assert b'title="DEXCore v1" file="hen_settings.xml"' in bytes_

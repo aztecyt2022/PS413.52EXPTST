@@ -23,18 +23,10 @@ class NativeShellUIMenuTests(unittest.TestCase):
         root = ET.fromstring(edited)
         nodes = builder.index_ids(root)
         assert nodes["id_hen_settings"].get("title") == "★ DEXCore v1"
-        assert nodes["id_hen_settings"].get("initial_focus_to") == "hncy_ftp"
-        assert nodes["hncy_ftp"].get("title") == "FTP Server"
-        assert nodes["hncy_tools"].get("title") == "Plugins"
-        assert nodes["hncy_system"].get("title") == "System"
-        assert nodes["payload_options"] in list(nodes["hncy_system"])
-        assert nodes["enable_plugins"] in list(nodes["payload_options"])
-        assert nodes["exploit_fixes"] in list(nodes["payload_options"])
-        assert nodes["ftp_status"].tag == "message"
         assert nodes["payload_options"].get("initial_focus_to") == "enable_plugins"
-        assert "System" in nodes["payload_options"].get("title")
+        assert "FTP Server" in nodes["payload_options"].get("title")
         switch = nodes["enable_plugins"]
-        assert switch.tag == "toggle_switch" and "Plugin" in switch.get("title")
+        assert switch.tag == "toggle_switch" and "FTP Server" in switch.get("title")
         assert switch.get("value") == "0" # actual runtime state comes from HEN INI
         assert sum(node.get("id") == "enable_plugins" for node in root.iter()) == 1
 

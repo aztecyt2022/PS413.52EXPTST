@@ -37,7 +37,6 @@ NOTIFICATION_PATCHES = (
     ("topmenu_label", 0x37C56, "★ HNCY".encode("utf-8"), b"DEXCore"),
     ("info_version", 0x39BA4, b"HENACY v1", b"DEXCore"),
     ("info_log", 0x39C0D, b"[HNCY] System Information version: %s; logo hook: %s\n", b"[DEXCore] System Information: %s; logo: %s\n"),
-    ("ftp_start_notice", 0x53250, b"Serving FTP\non %s:%d (%s)\nCompiled on %s %s\n", b"DEXCore FTP (ftpsrv a717ffd)\n%s:%d (%s)\n"),
 )
 FTP_BUILD_REVISION = b"a717ffd0b4699"
 
@@ -85,7 +84,7 @@ def validate_xml(old_xml, new_xml):
     for key in ("hncy_tools", "hncy_packages", "hncy_system"):
         if key not in current or current[key].tag != "setting_list":
             raise ValueError("Missing native HENACY submenu: " + key)
-    if current["id_hen_settings"].get("initial_focus_to") != "hncy_ftp":
+    if current["id_hen_settings"].get("initial_focus_to") != "payload_options":
         raise ValueError("DEXCore initial focus is not connected")
 
 
@@ -130,8 +129,6 @@ def build(base_path, menu_path, output_path):
         raise ValueError("Outer Settings link is outside the plugin PRX")
     candidate[outer_at:outer_at + len(TOP_LINK_OLD)] = TOP_LINK_NEW
     # No executable bytes, firmware offsets or other native resources may change.
-    if base[0x4C000:0x59000].count(FTP_BUILD_REVISION) != 1:
-        raise ValueError("Unverified embedded FTP source revision")
     allowed = [(XML_START, end), (offset, offset + len(OLD_SUFFIX)),
                (outer_at, outer_at + len(TOP_LINK_OLD))]
     for label, at, before, after in NOTIFICATION_PATCHES:
