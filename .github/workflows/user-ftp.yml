@@ -1,43 +1,18 @@
-name: Publish exact user FTP payload
+name: Archived standalone FTP source (manual inspection only)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'vendor/ps4-ftp/**'
-      - 'scripts/materialize-user-ftp.py'
-      - 'ftp-payload.js'
-      - 'scripts/build.mjs'
-      - '.github/workflows/user-ftp.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  restore-and-publish:
+  archived:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Validate exact uploaded FTPS4 and host regression
+      - name: Confirm old FTP upload path is retired
         run: |
-          python3 scripts/materialize-user-ftp.py
-          npm test
-          npm run build
-      - name: Commit original FTPS4 binary for GitHub Pages
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f loader/user-ftp.bin
-          if git diff --staged --quiet; then
-            echo "Original uploaded FTP binary is already published"
-          else
-            git commit -m "Publish SHA-verified original user-provided FTPS4 binary (1337)"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+          test ! -e dist/loader/user-ftp.bin
+          grep -q 'loader/dexcore.bin' scripts/build.mjs || true
+          echo "The website no longer deploys or launches the standalone FTPS4 payload."
