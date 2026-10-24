@@ -42,7 +42,8 @@ jobs:
           f=Path("dist/dexcore-13.52-test.bin")
           b=f.read_bytes()
           assert len(b)==500448
-          result={"name":"DEXCore 13.52 native Settings FTP test candidate",
+          result={"name":"DEXCORE 1.1 native Settings and icon test candidate",
+                  "version":"1.1",
                   "tested_on_real_ps4":False,"ftp_control":"Existing HEN enable_plugins; restart required",
                   "binary":f.name,"size":len(b),"sha256":hashlib.sha256(b).hexdigest(),
                   "legacy_original_payload_unmodified":True}
