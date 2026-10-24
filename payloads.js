@@ -5,6 +5,6 @@
     original:false,
     label:"DEXCore v1",
     query:"",
-    payload:["dexcore.bin?v=1-eb7e3df63c9f",500448,"eb7e3df63c9fb22e303d8ee183f239b07ba54887e6effaa8fb4d0adf168210be"]
+    payload:["dexcore.bin?v=1-6e2f6c55187a",500448,"6e2f6c55187a8730f40639b0c7adf7a9096a74d37c149cfbcc104f22b3d6f29a"]
   };
 })();
