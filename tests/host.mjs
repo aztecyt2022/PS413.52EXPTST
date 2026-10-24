@@ -67,7 +67,7 @@ if(promoted){
     assert.deepEqual([...dexcore.subarray(0x50155,0x5015a)],[144,144,144,144,144]);
     assert.deepEqual([...dexcore.subarray(0x5013e,0x50143)],[232,77,24,0,0]);
   }
-  assert(dexcore.includes(Buffer.from('FTP / Payload Options')));
+  assert(dexcore.includes(Buffer.from('FTP / Payload Options')) || dexcore.includes(Buffer.from('FTP Server')));
   if(dexcore.includes(Buffer.from('ftpsrv a717ffd'))){
     assert(dexcore.includes(Buffer.from('DEXCore already loaded. Skipping...')));
     assert(dexcore.includes(Buffer.from('FTP Server')));

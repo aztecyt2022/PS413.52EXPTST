@@ -1,34 +1,21 @@
-# DEXCore v1 — Native PS4 Settings menu
+# DEXCore v1 — PS4 13.52 native FTP integration
 
-This is a native PS4 Settings XML menu; **not** a VSH/XMB overlay.
+DEXCore installs its native PS4 Settings entry and standard HEN plugin subsystem. Its native menu's `enable_plugins` switch controls HEN plugins as a group; it is **not** an FTP start switch.
 
-```
-PS4 Settings
-  DEXCore v1 (native PS4 Settings root link)
-    ★ DEXCore v1
-      ★ FTP Server / Payload Options
-        FTP Server + Plugins (Restart Required)
-        Existing firmware/payload toggles
-      DEXCore Tools
-        Plugin Manager
-        Package Manager
-      System
-```
+## User-provided FTPS4 is the only active FTP server in new builds
 
-The native root link text is rebranded to DEXCore v1 using an equal-length, SHA-pinned modification of its built-in XML string. Internal `hen_settings`/`hncy_*` IDs and original file paths remain for compatibility with the PS4 Mono hook.
+The user provided a standalone 29,052-byte PS4 FTP payload, preserved byte-for-byte and independently verified against SHA-256 `b4b984524ac63508255175c76bdf942ebfbd577234337bfd91e2712e27738560`. It is exposed from `loader/user-ftp.bin`.
 
-**FTP semantics:** The new visible FTP setting is the existing HEN `enable_plugins` toggle, kept on the `payload_options` page where the upstream ShellUI handler persists it. Enabling plugins allows the bundled HEN `plugin_server` to start FTP on port **2121** and kernel logging on **3232** after HEN is reloaded. It is not a standalone FTP-only toggle, does not report listening state, and is unsuitable for untrusted networks. The server must be installed and load successfully.
+Start it **after HEN is loaded** using the DEXCore website's explicit **Launch uploaded FTP (1337)** button. The browser and loader each verify SHA-256 and size before launching the binary. FTPS4 itself notifies the PS4's real IP address and TCP **1337** listening port. This binary does not embed an identifiable semantic software version. Keep the PS4 browser open while using this process-bound server.
 
-Upstream: [HEN configuration](https://github.com/Scene-Collective/ps4-hen/blob/main/installer/source/config.c), [ShellUI write handler](https://github.com/Scene-Collective/ps4-hen-plugins/blob/main/plugin_mono/source/shellui_patch/settings_menu.c), [server plugin](https://github.com/Scene-Collective/ps4-hen-plugins/tree/main/plugin_server/source).
+DEXCore's `plugin_server.prx` is retained only to preserve HEN's other plugin features. Its compiled call that starts the bundled 2121 FTP thread is disabled through a guarded five-byte patch. The separate kernel log `pthread_create` call remains intact. Do not substitute the standalone `.bin` for a `.prx`: these executables have incompatible formats.
 
-## Active hosted DEXCore binary and recovery
+If your PS4 still has an older `/data/hen/plugin_server.prx`, it can continue launching the old 2121 FTP server until you refresh/reinstall the native HEN PRXs and reboot. Backup `/data/hen` before replacing modules.
 
-Run `python3 scripts/build-shellui-preview.py --output dist/dexcore-13.52-test.bin` to create a separate, SHA-pinned 13.52 candidate. The native version branding is patched in the same candidate under an exact byte check. The CI candidate is copied into `loader/dexcore.bin` and selected by the default PS4 website host after SHA-256 integrity checks. The original `loader/henacy.bin` is never overwritten and is selectable through `?legacy=1`. The [DEXCore native CI job](https://github.com/aztecyt2022/PS413.52EXPTST/actions/workflows/dexcore-native.yml) tests and packages the output.
+## Current PS4 Settings and limitations
 
-No Sony firmware code, kernel patch or action ID is modified. **Physical PS4 tests are still required.** Keep backup/recovery access before installation.
+The existing Settings page uses the original `payload_options` ID, which is important for native `hen.ini` persistence. The FTP entry explains the web-started user FTPS4; the original system and plugin controls remain functional.
 
-## User FTP payload override (current)
+There is **no independent native Settings toggle** for this standalone FTPS4 payload yet. The website's FTP launch button is the on-demand control. No native XMB/VSH overlay is installed. Firmware 13.52 hardware validation is still required, and anonymous FTP should run only on a trusted LAN.
 
-The DEXCore website has a separate **Launch uploaded FTP (1337)** button. The originally uploaded 29,052-byte `ps4-ftp(3).bin` is preserved losslessly in Git as verified xz/base64 blobs, rebuilt by the static-site build, and SHA-checked by both host and loader. The existing PS4 browser exploit runner uses its already-jailbroken fast path when it detects that the kernel is patched. Its runtime compatibility on PS4 13.52 has not been proven with hardware.
-
-The PS4 native Settings FTP page is still only informational. Older HEN plugin_server PRXs already installed on a PS4 may still run their **2121** listener; refresh PRXs and reboot to use DEXCore’s disabled-autostart build. The standalone user FTP payload should **not** be written to `plugin_server.prx`; the two executable formats are incompatible. The current integration disables the native old FTP autostart only in newly installed DEXCore plugin_server PRXs. It does not implement a native post-boot Settings switch.
+Upstream HEN native config: https://github.com/Scene-Collective/ps4-hen ; user payload is shipped from the repository's checksum-verified bundled archive.
