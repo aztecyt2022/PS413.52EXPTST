@@ -130,7 +130,7 @@ def build(base_path, menu_path, output_path):
         raise ValueError("Outer Settings link is outside the plugin PRX")
     candidate[outer_at:outer_at + len(TOP_LINK_OLD)] = TOP_LINK_NEW
     # No executable bytes, firmware offsets or other native resources may change.
-    if base.count(FTP_BUILD_REVISION) != 1 or base.find(FTP_BUILD_REVISION, 0x4C000, 0x59000) < 0:
+    if base[0x4C000:0x59000].count(FTP_BUILD_REVISION) != 1:
         raise ValueError("Unverified embedded FTP source revision")
     allowed = [(XML_START, end), (offset, offset + len(OLD_SUFFIX)),
                (outer_at, outer_at + len(TOP_LINK_OLD))]
