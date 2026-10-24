@@ -27,7 +27,7 @@ p{line-height:1.5}a{color:#ffc0c0}#results{padding:0;list-style:none}
 </main>
 <script src="../device.js"></script>
 <script src="../payloads.js?v=dexcore-v1-1"></script>
-<script src="../ftp-payload.js?v=userftp-b4b98452"></script>
+
 <script src="../sha256.js"></script>
 <script>
 (function(){
@@ -87,10 +87,6 @@ if(build&&build.payload){
  var files=["jb.js","core.js","mem.js","int64.js","ps4_offsets.js","rpc_worker.js"];
  for(var i=0;i<files.length;i++)resource(files[i],files[i],0,"");
  resource("DEXCORE payload",build.payload[0],build.payload[1],build.payload[2]);
- if(window.DEXCORE_FTP){
-  var ftp=window.DEXCORE_FTP;
-  resource("Uploaded FTPS4 (TCP 1337)",ftp.filename,ftp.size,ftp.sha256);
- }
  resource("13.52 kernel patch","patches/1352.bin",632,"adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e");
 }else line("bad","Payload selection","payloads.js did not initialize");
 update();
