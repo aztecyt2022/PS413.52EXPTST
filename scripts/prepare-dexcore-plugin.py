@@ -52,7 +52,7 @@ def generate(source: Path, output: Path):
     if raw_xml!=xml:
         raise ValueError("Plugin's embedded Settings XML differs from checked source")
     server=data[SERVER_START:SERVER_END]
-    if len(server)!=77376 or server[:4]!=b"\\x4f\\x15\\x3d\\x1d":
+    if len(server)!=77376 or server[:4]!=bytes.fromhex("4f153d1d"):
         raise ValueError("Invalid plugin_server SELF extraction")
     if data[FTP_CREATE_CALL:FTP_CREATE_CALL+5]!=bytes.fromhex("9090909090"):
         raise ValueError("DEXCore native plugin_server still autostarts old FTP")
