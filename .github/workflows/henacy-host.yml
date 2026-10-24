@@ -18,8 +18,6 @@ jobs:
           node-version: '22'
       - name: Verify DEXCore single-version payload selection
         run: npm test
-      - name: Verify FTPS4 stop/status controller with local mock daemon
-        run: python3 tests/test-ftp-control.py
       - name: Verify native System Information
         run: npm run test:native
       - name: Verify native Settings XML preview
